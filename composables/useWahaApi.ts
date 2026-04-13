@@ -7,6 +7,20 @@ const apiKey = useState<string>("waha_api_key", () => "");
 const baseUrl = useState<string>("waha_base_url", () => "");
 let initPromise: Promise<void> | null = null;
 
+//
+// Return the origin (e.g. https://waha.example.com) so that all $fetch calls
+// use absolute URLs rooted at the server origin, not at the Nuxt app.baseURL
+// (/dashboard/).  Without this, Nuxt's ofetch prefixes every path with
+// /dashboard/, turning /api/sessions into /dashboard/api/sessions which the
+// static file server serves as the SPA HTML instead of the real API response.
+//
+function apiBase(): string {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return "";
+}
+
 export function useWahaApi() {
   async function init(): Promise<void> {
     if (apiKey.value) return;
@@ -17,10 +31,12 @@ export function useWahaApi() {
 
   async function fetchConfig(): Promise<void> {
     try {
-      const data = await $fetch<WahaConfig>("/api/dashboard/config");
+      const data = await $fetch<WahaConfig>(
+        `${apiBase()}/api/dashboard/config`,
+        { credentials: "same-origin" },
+      );
       apiKey.value = data.apiKey || "";
-      baseUrl.value =
-        typeof window !== "undefined" ? window.location.origin : "";
+      baseUrl.value = apiBase();
     } catch (err: unknown) {
       // 401 = not logged in → redirect to login page
       const status =
@@ -34,8 +50,7 @@ export function useWahaApi() {
         window.location.href = "/dashboard/login.html";
         return;
       }
-      baseUrl.value =
-        typeof window !== "undefined" ? window.location.origin : "";
+      baseUrl.value = apiBase();
     }
   }
 
@@ -49,12 +64,12 @@ export function useWahaApi() {
 
   async function get<T>(path: string): Promise<T> {
     await init();
-    return $fetch<T>(path, { headers: headers() });
+    return $fetch<T>(`${apiBase()}${path}`, { headers: headers() });
   }
 
   async function post<T>(path: string, body?: unknown): Promise<T> {
     await init();
-    return $fetch<T>(path, {
+    return $fetch<T>(`${apiBase()}${path}`, {
       method: "POST",
       headers: headers(),
       body: body as Record<string, unknown>,
@@ -63,7 +78,7 @@ export function useWahaApi() {
 
   async function put<T>(path: string, body?: unknown): Promise<T> {
     await init();
-    return $fetch<T>(path, {
+    return $fetch<T>(`${apiBase()}${path}`, {
       method: "PUT",
       headers: headers(),
       body: body as Record<string, unknown>,
@@ -72,7 +87,10 @@ export function useWahaApi() {
 
   async function del<T>(path: string): Promise<T> {
     await init();
-    return $fetch<T>(path, { method: "DELETE", headers: headers() });
+    return $fetch<T>(`${apiBase()}${path}`, {
+      method: "DELETE",
+      headers: headers(),
+    });
   }
 
   return {
