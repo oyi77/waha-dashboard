@@ -65,9 +65,13 @@
               <span
                 v-if="session.engine"
                 class="badge"
-                :class="`engine-${session.engine.toLowerCase()}`"
+                :class="
+                  resolveEngine(session.engine)
+                    ? `engine-${resolveEngine(session.engine).toLowerCase()}`
+                    : ''
+                "
               >
-                {{ session.engine }}
+                {{ resolveEngine(session.engine) || session.engine }}
               </span>
               <span class="badge" :class="sessionStatusClass(session.status)">
                 <span class="badge-dot" />{{ session.status }}
@@ -129,11 +133,11 @@
           <div class="detail-row">
             <span class="detail-key">Engine:</span>
             <span
-              v-if="selectedSession.engine"
+              v-if="resolveEngine(selectedSession.engine)"
               class="badge"
-              :class="`engine-${selectedSession.engine.toLowerCase()}`"
+              :class="`engine-${resolveEngine(selectedSession.engine).toLowerCase()}`"
             >
-              {{ selectedSession.engine }}
+              {{ resolveEngine(selectedSession.engine) }}
             </span>
             <span v-else class="detail-val">Unknown</span>
           </div>
@@ -187,8 +191,15 @@ interface SessionMe {
 interface SessionInfo {
   name: string;
   status: string;
-  engine?: string;
+  engine?: string | Record<string, unknown>;
   me?: SessionMe | null;
+}
+
+function resolveEngine(
+  engine: string | Record<string, unknown> | undefined,
+): string {
+  if (typeof engine === "string" && engine.length > 0) return engine;
+  return "";
 }
 
 interface ServerStatus {
@@ -228,8 +239,9 @@ const uptimeFormatted = computed<string>(() => {
 const engineCounts = computed<Record<string, number>>(() => {
   const counts: Record<string, number> = {};
   for (const s of sessions.value) {
-    if (s.engine) {
-      counts[s.engine] = (counts[s.engine] || 0) + 1;
+    const eng = resolveEngine(s.engine);
+    if (eng) {
+      counts[eng] = (counts[eng] || 0) + 1;
     }
   }
   return counts;
@@ -292,7 +304,7 @@ async function load(): Promise<void> {
 
 function openSessionDetail(session: SessionInfo) {
   selectedSession.value = session;
-  engineToSwitch.value = session.engine ?? "";
+  engineToSwitch.value = resolveEngine(session.engine);
 }
 
 function closeSessionDetail() {
@@ -303,7 +315,11 @@ function closeSessionDetail() {
 async function switchEngine() {
   const newEngine = engineToSwitch.value;
   const name = selectedSession.value?.name;
-  if (!newEngine || !name || newEngine === selectedSession.value?.engine)
+  if (
+    !newEngine ||
+    !name ||
+    newEngine === resolveEngine(selectedSession.value?.engine)
+  )
     return;
 
   isSwitching.value = true;

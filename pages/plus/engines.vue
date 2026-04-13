@@ -223,11 +223,11 @@
           <label class="form-label">Current Engine</label>
           <div style="margin-bottom: 16px">
             <span
-              v-if="sessionToSwitch?.engine"
+              v-if="resolveEngine(sessionToSwitch?.engine)"
               class="badge"
-              :class="`engine-${sessionToSwitch.engine.toLowerCase()}`"
+              :class="`engine-${resolveEngine(sessionToSwitch?.engine).toLowerCase()}`"
             >
-              {{ sessionToSwitch.engine }}
+              {{ resolveEngine(sessionToSwitch?.engine) }}
             </span>
             <span v-else style="color: var(--text-dim)">Unknown</span>
           </div>
@@ -252,7 +252,8 @@
             style="flex: 1"
             @click="switchEngine"
             :disabled="
-              isSwitching || switchForm.engine === sessionToSwitch?.engine
+              isSwitching ||
+              switchForm.engine === resolveEngine(sessionToSwitch?.engine)
             "
           >
             {{ isSwitching ? "Switching..." : "Switch" }}
@@ -270,7 +271,14 @@ import { useToast } from "~/composables/useToast";
 interface Session {
   name: string;
   status: string;
-  engine?: string;
+  engine?: string | Record<string, unknown>;
+}
+
+function resolveEngine(
+  engine: string | Record<string, unknown> | undefined,
+): string {
+  if (typeof engine === "string" && engine.length > 0) return engine;
+  return "";
 }
 
 interface EngineCapability {
@@ -351,7 +359,7 @@ const switchForm = reactive({ engine: "" });
 const groupedSessions = computed(() => {
   const groups: Record<string, Session[]> = {};
   for (const s of sessions.value) {
-    const eng = s.engine ?? "Unknown";
+    const eng = resolveEngine(s.engine) || "Unknown";
     if (!groups[eng]) groups[eng] = [];
     groups[eng].push(s);
   }
@@ -434,7 +442,7 @@ async function createSession() {
 
 function openSwitchEngine(session: Session) {
   sessionToSwitch.value = session;
-  switchForm.engine = session.engine ?? fallbackEngines[0].name;
+  switchForm.engine = resolveEngine(session.engine) || fallbackEngines[0].name;
   showSwitch.value = true;
 }
 
@@ -447,7 +455,7 @@ function closeSwitchEngine() {
 async function switchEngine() {
   if (
     !sessionToSwitch.value ||
-    switchForm.engine === sessionToSwitch.value.engine
+    switchForm.engine === resolveEngine(sessionToSwitch.value.engine)
   )
     return;
 
