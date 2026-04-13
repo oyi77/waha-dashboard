@@ -62,9 +62,15 @@ export function useWahaApi() {
     return apiKey.value ? { Authorization: `Bearer ${apiKey.value}` } : {};
   }
 
-  async function get<T>(path: string): Promise<T> {
+  async function get<T>(
+    path: string,
+    extra?: Record<string, unknown>,
+  ): Promise<T> {
     await init();
-    return $fetch<T>(`${apiBase()}${path}`, { headers: headers() });
+    return $fetch<T>(`${apiBase()}${path}`, {
+      headers: headers(),
+      ...extra,
+    });
   }
 
   async function post<T>(path: string, body?: unknown): Promise<T> {

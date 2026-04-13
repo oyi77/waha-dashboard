@@ -336,15 +336,14 @@ async function openQr(name: string) {
   qrSession.value = name;
   qrData.value = "";
   try {
-    const data = await get<Record<string, unknown>>(
-      `/api/sessions/${name}/auth/qr?format=image`,
+    const data = await get<{ mimetype?: string; data?: string }>(
+      `/api/${name}/auth/qr`,
+      { headers: { Accept: "application/json" } } as any,
     );
     qrData.value =
-      typeof data?.data === "string"
-        ? data.data
-        : typeof data?.qr === "string"
-          ? data.qr
-          : "";
+      data?.mimetype && data?.data
+        ? `data:${data.mimetype};base64,${data.data}`
+        : "";
   } catch {
     error("Failed to load QR code");
   }
