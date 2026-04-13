@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { useWahaApi } from "~/composables/useWahaApi";
 import { useToast } from "~/composables/useToast";
 
 interface EventItem {
@@ -65,6 +66,7 @@ interface EventItem {
   payload: string;
 }
 
+const { init, apiKey } = useWahaApi();
 const { error } = useToast();
 
 const events = ref<EventItem[]>([]);
@@ -75,19 +77,30 @@ const terminalBody = ref<HTMLElement | null>(null);
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let unmounted = false;
+let reconnectAttempts = 0;
+const MAX_RECONNECT = 5;
 
 function formatTime(date: Date) {
   return date.toTimeString().split(" ")[0];
 }
 
-function connect() {
+async function connect() {
   if (typeof window === "undefined" || unmounted) return;
+  // Ensure API key is loaded before connecting
+  await init();
+  if (unmounted) return;
 
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${window.location.host}/ws`;
 
+  // Get API key for auth
+  const key = apiKey.value;
+  const authUrl = key
+    ? `${wsUrl}${wsUrl.includes("?") ? "&" : "?"}x-api-key=${encodeURIComponent(key)}`
+    : wsUrl;
+
   try {
-    ws = new WebSocket(wsUrl);
+    ws = new WebSocket(authUrl);
 
     ws.onopen = () => {
       if (unmounted) {
@@ -95,6 +108,7 @@ function connect() {
         return;
       }
       connected.value = true;
+      reconnectAttempts = 0;
       pushLog("system", "connection", `Connected to ${wsUrl}`);
     };
 
@@ -121,9 +135,18 @@ function connect() {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       connected.value = false;
       if (unmounted) return;
+      // Don't reconnect if auth failed
+      if (event.code === 1008 || event.code === 4002) {
+        pushLog(
+          "system",
+          "error",
+          `WebSocket auth failed (code ${event.code}). Check API key.`,
+        );
+        return;
+      }
       pushLog("system", "connection", "Disconnected. Reconnecting in 3s...");
       scheduleReconnect();
     };
@@ -139,6 +162,15 @@ function connect() {
 
 function scheduleReconnect() {
   if (unmounted) return;
+  if (reconnectAttempts >= MAX_RECONNECT) {
+    pushLog(
+      "system",
+      "error",
+      "Too many reconnect attempts. Refresh to retry.",
+    );
+    return;
+  }
+  reconnectAttempts++;
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(() => {
     connect();
