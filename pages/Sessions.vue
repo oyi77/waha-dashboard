@@ -14,12 +14,65 @@
         <div class="page-title">◎ Sessions</div>
         <div class="page-subtitle">WhatsApp session management</div>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center">
+      <div
+        style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap"
+      >
         <button class="btn-ghost" @click="loadSessions">⟳ Refresh</button>
+        <button
+          class="btn-secondary"
+          :disabled="stoppedCount === 0"
+          @click="startAllStopped"
+        >
+          ▶ Start All ({{ stoppedCount }})
+        </button>
+        <button
+          class="btn-ghost"
+          :disabled="workingCount === 0"
+          @click="stopAllWorking"
+        >
+          ⏹ Stop All ({{ workingCount }})
+        </button>
         <button class="btn-primary" @click="showCreate = true">
           + New Session
         </button>
       </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button
+          v-for="tab in statusTabs"
+          :key="tab.value"
+          class="filter-tab"
+          :class="{ active: filterStatus === tab.value }"
+          @click="filterStatus = tab.value"
+        >
+          {{ tab.label }}
+          <span class="filter-count">{{ tabCount(tab.value) }}</span>
+        </button>
+      </div>
+      <input
+        v-model="searchQuery"
+        class="filter-search"
+        placeholder="Search sessions..."
+        type="search"
+      />
+    </div>
+
+    <!-- Bulk Action Bar -->
+    <div v-if="selected.size > 0" class="bulk-bar">
+      <span class="bulk-label">{{ selected.size }} selected</span>
+      <button class="btn-secondary" @click="bulkStart">▶ Start</button>
+      <button class="btn-ghost" @click="bulkStop">⏹ Stop</button>
+      <button class="btn-danger" @click="bulkDelete">✕ Delete</button>
+      <button
+        class="btn-ghost"
+        style="margin-left: auto"
+        @click="selected.clear()"
+      >
+        ✕ Clear
+      </button>
     </div>
 
     <div v-if="loading" class="empty-state">
@@ -27,32 +80,46 @@
       <div class="empty-state-text">Loading sessions…</div>
     </div>
 
-    <div v-else-if="sessions.length === 0" class="empty-state">
+    <div v-else-if="filteredSessions.length === 0" class="empty-state">
       <div class="empty-state-icon">◎</div>
       <div class="empty-state-text">
-        No sessions yet. Create one to get started.
+        {{
+          sessions.length === 0
+            ? "No sessions yet. Create one to get started."
+            : "No sessions match your filter."
+        }}
       </div>
     </div>
 
     <div v-else class="sessions-grid stagger">
       <div
-        v-for="session in sessions"
+        v-for="session in filteredSessions"
         :key="session.name"
         class="session-card card"
+        :class="{ selected: selected.has(session.name) }"
       >
         <div class="session-card-top">
-          <div>
-            <div class="session-name">{{ session.name }}</div>
-            <div class="session-meta">
-              <span class="badge" :class="statusClass(session.status)">
-                <span class="badge-dot" />{{ session.status }}
-              </span>
-              <span
-                class="badge"
-                :class="`engine-${(session.engine || 'noweb').toLowerCase()}`"
-              >
-                {{ session.engine || "NOWEB" }}
-              </span>
+          <div class="session-left">
+            <label class="session-checkbox" @click.stop>
+              <input
+                type="checkbox"
+                :checked="selected.has(session.name)"
+                @change="toggleSelect(session.name)"
+              />
+            </label>
+            <div>
+              <div class="session-name">{{ session.name }}</div>
+              <div class="session-meta">
+                <span class="badge" :class="statusClass(session.status)">
+                  <span class="badge-dot" />{{ session.status }}
+                </span>
+                <span
+                  class="badge"
+                  :class="`engine-${(session.engine || 'noweb').toLowerCase()}`"
+                >
+                  {{ session.engine || "NOWEB" }}
+                </span>
+              </div>
             </div>
           </div>
           <div class="session-actions">
@@ -61,26 +128,46 @@
               class="btn-secondary"
               @click="confirmStart(session.name)"
             >
-              ▶ Start
+              ▶
             </button>
             <button
               v-if="session.status === 'WORKING'"
               class="btn-ghost"
               @click="confirmStop(session.name)"
             >
-              ⏹ Stop
+              ⏹
             </button>
             <button
               v-if="session.status === 'SCAN_QR_CODE'"
               class="btn-secondary"
               @click="openQr(session.name)"
             >
-              ⊡ QR Code
+              ⊡
+            </button>
+            <button
+              class="btn-ghost"
+              style="padding: 4px 8px; font-size: 13px"
+              @click="editSession(session)"
+            >
+              ⚙
             </button>
             <button class="btn-danger" @click="confirmDelete(session.name)">
               ✕
             </button>
           </div>
+        </div>
+
+        <!-- Tags -->
+        <div v-if="getTags(session).length > 0" class="session-tags">
+          <span
+            v-for="tag in getTags(session)"
+            :key="tag"
+            class="tag-pill"
+            :class="{ active: filterTag === tag }"
+            @click="toggleTagFilter(tag)"
+          >
+            {{ tag }}
+          </span>
         </div>
 
         <div v-if="session.me" class="session-me">
@@ -93,20 +180,27 @@
       </div>
     </div>
 
+    <!-- Create / Edit Session Modal -->
     <div
-      v-if="showCreate"
+      v-if="showCreate || editTarget !== null"
       class="modal-overlay"
-      @click.self="showCreate = false"
+      @click.self="closeModal"
     >
       <div class="modal-box">
-        <div class="modal-title">Create Session</div>
+        <div class="modal-title">
+          {{ editTarget !== null ? "Edit Session" : "Create Session" }}
+        </div>
         <div class="form-group">
           <label class="form-label">Session Name</label>
-          <input v-model="createForm.name" placeholder="default" />
+          <input
+            v-model="form.name"
+            :placeholder="editTarget !== null ? '' : 'default'"
+            :disabled="editTarget !== null"
+          />
         </div>
         <div class="form-group">
           <label class="form-label">Engine</label>
-          <select v-model="createForm.engine">
+          <select v-model="form.engine">
             <option value="">Auto</option>
             <option v-for="eng in engines" :key="eng" :value="eng">
               {{ eng }}
@@ -114,27 +208,32 @@
           </select>
         </div>
         <div class="form-group">
+          <label class="form-label">Tags (comma-separated)</label>
+          <input v-model="form.tags" placeholder="sales, support, bots" />
+        </div>
+        <div v-if="editTarget === null" class="form-group">
           <label class="form-label">Start on create</label>
           <label class="toggle-switch">
-            <input v-model="createForm.start" type="checkbox" />
+            <input v-model="form.start" type="checkbox" />
             <span class="toggle-slider" />
           </label>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px">
-          <button
-            class="btn-secondary"
-            style="flex: 1"
-            @click="showCreate = false"
-          >
+          <button class="btn-secondary" style="flex: 1" @click="closeModal">
             Cancel
           </button>
-          <button class="btn-primary" style="flex: 1" @click="createSession">
-            Create
+          <button
+            class="btn-primary"
+            style="flex: 1"
+            @click="editTarget !== null ? saveEdit() : createSession()"
+          >
+            {{ editTarget !== null ? "Save" : "Create" }}
           </button>
         </div>
       </div>
     </div>
 
+    <!-- QR Modal -->
     <div v-if="qrSession" class="modal-overlay" @click.self="qrSession = ''">
       <div class="modal-box" style="text-align: center">
         <div class="modal-title">Scan QR Code — {{ qrSession }}</div>
@@ -158,6 +257,7 @@
       </div>
     </div>
 
+    <!-- Confirm Modal -->
     <div
       v-if="confirmAction"
       class="modal-overlay"
@@ -192,7 +292,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from "vue";
+import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
 import { useWahaApi } from "~/composables/useWahaApi";
 import { useToast } from "~/composables/useToast";
 
@@ -201,6 +301,7 @@ interface Session {
   status: string;
   engine?: string;
   me?: { id?: string; pushName?: string };
+  metadata?: Record<string, string>;
 }
 
 interface ConfirmAction {
@@ -211,7 +312,7 @@ interface ConfirmAction {
   fn: () => void;
 }
 
-const { get, post, del } = useWahaApi();
+const { get, post, put, del } = useWahaApi();
 const { success, error } = useToast();
 
 const sessions = ref<Session[]>([]);
@@ -221,8 +322,69 @@ const showCreate = ref(false);
 const qrSession = ref("");
 const qrData = ref("");
 const confirmAction = ref<ConfirmAction | null>(null);
+const editTarget = ref<string | null>(null);
+const selected = ref<Set<string>>(new Set());
 
-const createForm = reactive({ name: "", engine: "", start: true });
+// Filter state
+const filterStatus = ref("ALL");
+const searchQuery = ref("");
+const filterTag = ref("");
+
+const form = reactive({
+  name: "",
+  engine: "",
+  tags: "",
+  start: true,
+});
+
+const statusTabs = [
+  { label: "All", value: "ALL" },
+  { label: "Working", value: "WORKING" },
+  { label: "Stopped", value: "STOPPED" },
+  { label: "Scan QR", value: "SCAN_QR_CODE" },
+  { label: "Failed", value: "FAILED" },
+];
+
+const stoppedCount = computed(
+  () => sessions.value.filter((s) => s.status === "STOPPED").length,
+);
+const workingCount = computed(
+  () => sessions.value.filter((s) => s.status === "WORKING").length,
+);
+
+const allTags = computed(() => {
+  const tags = new Set<string>();
+  for (const s of sessions.value) {
+    for (const tag of getTags(s)) {
+      tags.add(tag);
+    }
+  }
+  return Array.from(tags).sort();
+});
+
+const filteredSessions = computed(() => {
+  let list = sessions.value;
+
+  if (filterStatus.value !== "ALL") {
+    list = list.filter((s) => s.status === filterStatus.value);
+  }
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase();
+    list = list.filter((s) => s.name.toLowerCase().includes(q));
+  }
+
+  if (filterTag.value) {
+    list = list.filter((s) => getTags(s).includes(filterTag.value));
+  }
+
+  return list;
+});
+
+function tabCount(status: string): number {
+  if (status === "ALL") return sessions.value.length;
+  return sessions.value.filter((s) => s.status === status).length;
+}
 
 function statusClass(status: string): string {
   const map: Record<string, string> = {
@@ -239,6 +401,24 @@ function avatarLetter(name?: string): string {
   return (name?.[0] ?? "?").toUpperCase();
 }
 
+function getTags(session: Session): string[] {
+  const tags = session.metadata?.tags;
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags;
+  if (typeof tags === "string") {
+    return tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function toggleTagFilter(tag: string) {
+  filterTag.value = filterTag.value === tag ? "" : tag;
+}
+
+// ---- Load ----
 async function loadSessions() {
   loading.value = true;
   try {
@@ -258,27 +438,63 @@ async function loadEngines() {
   } catch {}
 }
 
+// ---- Create ----
 async function createSession() {
   try {
-    const body: Record<string, unknown> = {
-      name: createForm.name.trim() || "default",
-    };
-    if (createForm.engine) body.engine = createForm.engine;
+    const name = form.name.trim() || "default";
+    const body: Record<string, unknown> = { name };
+    if (form.engine) body.engine = form.engine;
+    if (form.tags.trim()) {
+      body.metadata = {
+        tags: form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+          .join(","),
+      };
+    }
     await post("/api/sessions", body);
-    if (createForm.start) {
-      await post(`/api/sessions/${body.name}/start`);
+    if (form.start) {
+      await post(`/api/sessions/${name}/start`);
     }
     success("Session created");
-    showCreate.value = false;
-    createForm.name = "";
-    createForm.engine = "";
-    createForm.start = true;
+    closeModal();
     await loadSessions();
   } catch (e) {
     error("Failed to create session");
   }
 }
 
+// ---- Edit ----
+function editSession(session: Session) {
+  editTarget.value = session.name;
+  form.name = session.name;
+  form.engine = session.engine ?? "";
+  form.tags = getTags(session).join(", ");
+}
+
+async function saveEdit() {
+  if (!editTarget.value) return;
+  try {
+    const config: Record<string, unknown> = {};
+    if (form.engine) config.engine = form.engine;
+    config.metadata = {
+      tags: form.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .join(","),
+    };
+    await put(`/api/sessions/${editTarget.value}`, { config });
+    success("Session updated");
+    closeModal();
+    await loadSessions();
+  } catch (e) {
+    error("Failed to update session");
+  }
+}
+
+// ---- Start / Stop ----
 function confirmStart(name: string) {
   confirmAction.value = {
     title: "Start Session",
@@ -317,6 +533,7 @@ function confirmStop(name: string) {
   };
 }
 
+// ---- Delete ----
 function confirmDelete(name: string) {
   confirmAction.value = {
     title: "Delete Session",
@@ -328,6 +545,7 @@ function confirmDelete(name: string) {
       try {
         await del(`/api/sessions/${name}`);
         success(`Session ${name} deleted`);
+        selected.value.delete(name);
         await loadSessions();
       } catch {
         error("Failed to delete session");
@@ -336,6 +554,132 @@ function confirmDelete(name: string) {
   };
 }
 
+// ---- Bulk ----
+function toggleSelect(name: string) {
+  if (selected.value.has(name)) {
+    selected.value.delete(name);
+  } else {
+    selected.value.add(name);
+  }
+}
+
+async function bulkStart() {
+  const names = Array.from(selected.value);
+  confirmAction.value = {
+    title: "Start Sessions",
+    message: `Start ${names.length} session(s)?`,
+    label: "Start",
+    danger: false,
+    fn: async () => {
+      confirmAction.value = null;
+      let ok = 0;
+      for (const name of names) {
+        try {
+          await post(`/api/sessions/${name}/start`);
+          ok++;
+        } catch {}
+      }
+      selected.value.clear();
+      success(`Started ${ok} session(s)`);
+      await loadSessions();
+    },
+  };
+}
+
+async function bulkStop() {
+  const names = Array.from(selected.value);
+  confirmAction.value = {
+    title: "Stop Sessions",
+    message: `Stop ${names.length} session(s)?`,
+    label: "Stop",
+    danger: true,
+    fn: async () => {
+      confirmAction.value = null;
+      let ok = 0;
+      for (const name of names) {
+        try {
+          await post(`/api/sessions/${name}/stop`);
+          ok++;
+        } catch {}
+      }
+      selected.value.clear();
+      success(`Stopped ${ok} session(s)`);
+      await loadSessions();
+    },
+  };
+}
+
+async function bulkDelete() {
+  const names = Array.from(selected.value);
+  confirmAction.value = {
+    title: "Delete Sessions",
+    message: `Delete ${names.length} session(s)? This cannot be undone.`,
+    label: "Delete",
+    danger: true,
+    fn: async () => {
+      confirmAction.value = null;
+      let ok = 0;
+      for (const name of names) {
+        try {
+          await del(`/api/sessions/${name}`);
+          ok++;
+        } catch {}
+      }
+      selected.value.clear();
+      success(`Deleted ${ok} session(s)`);
+      await loadSessions();
+    },
+  };
+}
+
+// ---- Start All / Stop All ----
+async function startAllStopped() {
+  const stopped = sessions.value.filter((s) => s.status === "STOPPED");
+  if (stopped.length === 0) return;
+  confirmAction.value = {
+    title: "Start All Stopped",
+    message: `Start all ${stopped.length} stopped session(s)?`,
+    label: "Start All",
+    danger: false,
+    fn: async () => {
+      confirmAction.value = null;
+      let ok = 0;
+      for (const s of stopped) {
+        try {
+          await post(`/api/sessions/${s.name}/start`);
+          ok++;
+        } catch {}
+      }
+      success(`Started ${ok} session(s)`);
+      await loadSessions();
+    },
+  };
+}
+
+async function stopAllWorking() {
+  const working = sessions.value.filter((s) => s.status === "WORKING");
+  if (working.length === 0) return;
+  confirmAction.value = {
+    title: "Stop All Working",
+    message: `Stop all ${working.length} working session(s)?`,
+    label: "Stop All",
+    danger: true,
+    fn: async () => {
+      confirmAction.value = null;
+      let ok = 0;
+      for (const s of working) {
+        try {
+          await post(`/api/sessions/${s.name}/stop`);
+          ok++;
+        } catch {}
+      }
+      success(`Stopped ${ok} session(s)`);
+      await loadSessions();
+    },
+  };
+}
+
+// ---- QR ----
 async function openQr(name: string) {
   qrSession.value = name;
   qrData.value = "";
@@ -353,6 +697,17 @@ async function openQr(name: string) {
   }
 }
 
+// ---- Modal helpers ----
+function closeModal() {
+  showCreate.value = false;
+  editTarget.value = null;
+  form.name = "";
+  form.engine = "";
+  form.tags = "";
+  form.start = true;
+}
+
+// ---- Poll ----
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 onMounted(async () => {
@@ -375,7 +730,13 @@ onUnmounted(() => {
 .session-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+
+.session-card.selected {
+  border-color: var(--accent);
+  background: rgba(34, 197, 94, 0.04);
 }
 
 .session-card-top {
@@ -385,11 +746,34 @@ onUnmounted(() => {
   gap: 12px;
 }
 
+.session-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.session-checkbox {
+  margin-top: 2px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
 .session-name {
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .session-meta {
@@ -405,6 +789,7 @@ onUnmounted(() => {
   border-radius: 50%;
   background: currentColor;
   display: inline-block;
+  margin-right: 4px;
 }
 
 .session-actions {
@@ -414,6 +799,29 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 
+.session-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tag-pill:hover,
+.tag-pill.active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--accent);
+}
+
 .session-me {
   display: flex;
   align-items: center;
@@ -421,7 +829,7 @@ onUnmounted(() => {
   font-size: 13px;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
-  padding-top: 12px;
+  padding-top: 10px;
 }
 
 .me-avatar {
@@ -440,5 +848,95 @@ onUnmounted(() => {
 
 .text-dim {
   color: var(--text-dim);
+}
+
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-tab:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.filter-tab.active {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-count {
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 99px;
+  background: var(--surface-hover);
+  color: var(--text-dim);
+}
+
+.filter-tab.active .filter-count {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--accent);
+}
+
+.filter-search {
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  min-width: 200px;
+}
+
+.filter-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Bulk Bar */
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.bulk-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-right: 4px;
 }
 </style>

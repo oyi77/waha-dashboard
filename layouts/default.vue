@@ -7,15 +7,9 @@
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-label">Core</div>
+        <div class="nav-section-label">Overview</div>
         <NuxtLink to="/" class="nav-item" @click="closeSidebar">
           <span class="nav-icon">⊞</span> Dashboard
-        </NuxtLink>
-        <NuxtLink to="/Sessions" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◎</span> Sessions
-        </NuxtLink>
-        <NuxtLink to="/Workers" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⚙</span> Workers
         </NuxtLink>
         <NuxtLink to="/event-monitor" class="nav-item" @click="closeSidebar">
           <span class="nav-icon">◉</span> Event Monitor
@@ -23,38 +17,51 @@
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-label">
-          Plus <span class="plus-badge">⚡</span>
-        </div>
-        <NuxtLink to="/plus" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">✦</span> Plus Hub
+        <div class="nav-section-label">Sessions</div>
+        <NuxtLink to="/Sessions" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">◎</span> Sessions
         </NuxtLink>
-        <NuxtLink to="/plus/sessions" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◎</span> Session Manager
+        <NuxtLink to="/Workers" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">⚙</span> Workers
         </NuxtLink>
-        <NuxtLink to="/plus/analytics" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">▲</span> Analytics
-        </NuxtLink>
-        <NuxtLink to="/plus/schedule" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◷</span> Scheduling
-        </NuxtLink>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">Messaging</div>
         <NuxtLink to="/plus/templates" class="nav-item" @click="closeSidebar">
           <span class="nav-icon">▣</span> Templates
         </NuxtLink>
         <NuxtLink to="/plus/autoreply" class="nav-item" @click="closeSidebar">
           <span class="nav-icon">↩</span> Auto-Reply
         </NuxtLink>
-        <NuxtLink to="/plus/apikeys" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⚿</span> API Keys
+        <NuxtLink to="/plus/schedule" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">◷</span> Scheduling
         </NuxtLink>
         <NuxtLink to="/plus/contacts" class="nav-item" @click="closeSidebar">
           <span class="nav-icon">◑</span> Contacts
         </NuxtLink>
-        <NuxtLink to="/plus/mcp" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⬡</span> MCP Server
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">Analytics</div>
+        <NuxtLink to="/plus/analytics" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">▲</span> Analytics
+        </NuxtLink>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">Settings</div>
+        <NuxtLink to="/Settings" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">⚙</span> Settings
+        </NuxtLink>
+        <NuxtLink to="/plus/apikeys" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">⚿</span> API Keys
         </NuxtLink>
         <NuxtLink to="/plus/engines" class="nav-item" @click="closeSidebar">
           <span class="nav-icon">◈</span> Engines
+        </NuxtLink>
+        <NuxtLink to="/plus/mcp" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">⬡</span> MCP Server
         </NuxtLink>
         <NuxtLink to="/plus/skills" class="nav-item" @click="closeSidebar">
           <span class="nav-icon">✧</span> Claude Skills
@@ -98,8 +105,9 @@ const pageTitles: Record<string, string> = {
   "/Sessions": "Sessions",
   "/Workers": "Workers",
   "/event-monitor": "Event Monitor",
-  "/plus": "Plus Hub",
+  "/plus": "Plus Dashboard",
   "/plus/sessions": "Session Manager",
+  "/Settings": "Settings",
   "/plus/analytics": "Analytics",
   "/plus/schedule": "Scheduling",
   "/plus/templates": "Templates",
