@@ -124,6 +124,13 @@
           </div>
           <div class="session-actions">
             <button
+              v-if="session.status === 'FAILED'"
+              class="btn-secondary"
+              @click="confirmStart(session.name)"
+            >
+              ↻
+            </button>
+            <button
               v-if="session.status === 'STOPPED'"
               class="btn-secondary"
               @click="confirmStart(session.name)"
@@ -133,9 +140,9 @@
             <button
               v-if="session.status === 'WORKING'"
               class="btn-ghost"
-              @click="confirmStop(session.name)"
+              @click="confirmRestart(session.name)"
             >
-              ⏹
+              ↻
             </button>
             <button
               v-if="session.status === 'SCAN_QR_CODE'"
@@ -528,6 +535,26 @@ function confirmStop(name: string) {
         await loadSessions();
       } catch {
         error("Failed to stop session");
+      }
+    },
+  };
+}
+
+// ---- Restart ----
+function confirmRestart(name: string) {
+  confirmAction.value = {
+    title: "Restart Session",
+    message: `Restart session "${name}"? This will stop and start it again.`,
+    label: "Restart",
+    danger: false,
+    fn: async () => {
+      confirmAction.value = null;
+      try {
+        await post(`/api/sessions/${name}/restart`);
+        success(`Session ${name} restarting`);
+        await loadSessions();
+      } catch {
+        error("Failed to restart session");
       }
     },
   };
