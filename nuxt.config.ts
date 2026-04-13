@@ -10,6 +10,11 @@ export default defineNuxtConfig({
       title: "WAHA Dashboard",
       link: [
         {
+          rel: "icon",
+          type: "image/svg+xml",
+          href: "/dashboard/favicon.svg",
+        },
+        {
           rel: "preconnect",
           href: "https://fonts.googleapis.com",
         },
