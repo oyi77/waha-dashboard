@@ -200,7 +200,10 @@ async function toggleRule(rule: AutoReplyRule) {
 }
 
 async function testRule() {
-  if (!testInput.value) return;
+  if (!testInput.value) {
+    error("Enter a test message first");
+    return;
+  }
   try {
     const data = await post<unknown>("/api/autoreply/test", {
       text: testInput.value,
@@ -210,6 +213,21 @@ async function testRule() {
     testResult.value = { matched: false };
   }
 }
+
+const payloadTemplates: Record<string, string> = {
+  text: '{"text": "Hello back!"}',
+  image: '{"url": "https://example.com/image.jpg", "caption": ""}',
+  video: '{"url": "https://example.com/video.mp4", "caption": ""}',
+  audio: '{"url": "https://example.com/audio.mp3"}',
+  file: '{"url": "https://example.com/file.pdf", "filename": "file.pdf"}',
+};
+
+watch(
+  () => createForm.type,
+  (newType) => {
+    createForm.payload = payloadTemplates[newType] ?? '{"text": ""}';
+  },
+);
 
 onMounted(loadRules);
 </script>

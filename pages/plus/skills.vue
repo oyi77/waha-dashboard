@@ -294,7 +294,7 @@
 
 <script setup lang="ts">
 const { init, apiKey } = useWahaApi();
-
+const { error } = useToast();
 const origin = computed(() =>
   typeof window !== "undefined" ? window.location.origin : "",
 );
@@ -458,11 +458,15 @@ const installSteps = [
 ];
 
 async function copyText(text: string, key: string) {
-  await navigator.clipboard.writeText(text);
-  copied[key] = true;
-  setTimeout(() => {
-    copied[key] = false;
-  }, 1500);
+  try {
+    await navigator.clipboard.writeText(text);
+    copied[key] = true;
+    setTimeout(() => {
+      copied[key] = false;
+    }, 1500);
+  } catch {
+    error("Failed to copy to clipboard");
+  }
 }
 
 onMounted(() => init());

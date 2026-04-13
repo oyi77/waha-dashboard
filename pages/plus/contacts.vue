@@ -162,7 +162,9 @@ async function loadSessions() {
     if (sessions.value.length > 0 && !session.value) {
       session.value = sessions.value[0];
     }
-  } catch {}
+  } catch {
+    error("Failed to load sessions");
+  }
 }
 
 function parseNumbers(text: string): string[] {
@@ -186,14 +188,22 @@ function onFileChange(e: Event) {
 function readFile(file: File) {
   const reader = new FileReader();
   reader.onload = (e) => {
-    const text = e.target?.result as string;
-    preview.value = parseNumbers(text);
+    const result = e.target?.result;
+    if (typeof result !== "string") {
+      error("Could not read file — please upload a plain text or CSV file");
+      return;
+    }
+    preview.value = parseNumbers(result);
     results.value = [];
+  };
+  reader.onerror = () => {
+    error("Failed to read file");
   };
   reader.readAsText(file);
 }
 
 async function checkContacts() {
+  if (checking.value) return;
   if (!session.value || preview.value.length === 0) return;
   checking.value = true;
   try {

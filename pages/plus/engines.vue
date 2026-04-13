@@ -387,6 +387,7 @@ async function loadEngines() {
     }
   } catch {
     engineCards.value = fallbackEngines;
+    error("Failed to load engine info — showing defaults");
   } finally {
     loadingEngines.value = false;
   }

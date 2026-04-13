@@ -315,13 +315,21 @@ const tester = reactive({
 });
 
 async function copyUrl() {
-  await navigator.clipboard.writeText(mcpUrl.value);
-  success("Copied");
+  try {
+    await navigator.clipboard.writeText(mcpUrl.value);
+    success("Copied");
+  } catch {
+    error("Failed to copy to clipboard");
+  }
 }
 
 async function copy(text: string) {
-  await navigator.clipboard.writeText(text);
-  success("Copied");
+  try {
+    await navigator.clipboard.writeText(text);
+    success("Copied");
+  } catch {
+    error("Failed to copy to clipboard");
+  }
 }
 
 async function loadSessions() {
@@ -331,7 +339,9 @@ async function loadSessions() {
     if (sessions.value.length > 0 && !tester.session) {
       tester.session = sessions.value[0];
     }
-  } catch {}
+  } catch {
+    error("Failed to load sessions");
+  }
 }
 
 async function runTool() {

@@ -257,7 +257,7 @@ async function loadEngines() {
 async function createSession() {
   try {
     const body: Record<string, unknown> = {
-      name: createForm.name || "default",
+      name: createForm.name.trim() || "default",
     };
     if (createForm.engine) body.engine = createForm.engine;
     await post("/api/sessions", body);
@@ -336,10 +336,15 @@ async function openQr(name: string) {
   qrSession.value = name;
   qrData.value = "";
   try {
-    const data = await get<{ qr?: string }>(
+    const data = await get<Record<string, unknown>>(
       `/api/sessions/${name}/auth/qr?format=image`,
     );
-    qrData.value = (data as unknown as { data: string }).data ?? "";
+    qrData.value =
+      typeof data?.data === "string"
+        ? data.data
+        : typeof data?.qr === "string"
+          ? data.qr
+          : "";
   } catch {
     error("Failed to load QR code");
   }

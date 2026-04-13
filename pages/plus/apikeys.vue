@@ -64,7 +64,9 @@
               </label>
             </td>
             <td>
-              <button class="btn-danger" @click="deleteKey(k.id)">✕</button>
+              <button class="btn-danger" @click="confirmDeleteKey(k.id)">
+                ✕
+              </button>
             </td>
           </tr>
         </tbody>
@@ -124,6 +126,34 @@
         </button>
       </div>
     </div>
+
+    <div
+      v-if="deleteTargetId"
+      class="modal-overlay"
+      @click.self="deleteTargetId = ''"
+    >
+      <div class="modal-box">
+        <div class="modal-title">Delete API Key</div>
+        <p
+          style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px"
+        >
+          Permanently delete this API key? Any clients using it will lose access
+          immediately.
+        </p>
+        <div style="display: flex; gap: 10px">
+          <button
+            class="btn-ghost"
+            style="flex: 1"
+            @click="deleteTargetId = ''"
+          >
+            Cancel
+          </button>
+          <button class="btn-danger" style="flex: 1" @click="deleteKey">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -141,6 +171,7 @@ const { success, error } = useToast();
 const keys = ref<ApiKey[]>([]);
 const showCreate = ref(false);
 const createdKey = ref("");
+const deleteTargetId = ref("");
 const createForm = reactive({ name: "" });
 
 function maskKey(key: string): string {
@@ -183,7 +214,13 @@ async function createKey() {
   }
 }
 
-async function deleteKey(id: string) {
+function confirmDeleteKey(id: string) {
+  deleteTargetId.value = id;
+}
+
+async function deleteKey() {
+  const id = deleteTargetId.value;
+  deleteTargetId.value = "";
   try {
     await del(`/api/keys/${id}`);
     success("Deleted");
@@ -195,7 +232,7 @@ async function deleteKey(id: string) {
 
 async function toggleKey(k: ApiKey) {
   try {
-    await put(`/api/keys/${k.id}`, { active: !(k.active !== false) });
+    await put(`/api/keys/${k.id}`, { active: k.active === false });
     await loadKeys();
   } catch {
     error("Failed to update key");

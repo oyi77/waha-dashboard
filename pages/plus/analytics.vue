@@ -260,7 +260,9 @@ function areaPath(vals: number[]): string {
 }
 
 function formatTs(ts: number): string {
-  return new Date(ts * 1000).toLocaleString();
+  if (!ts || ts < 0) return "—";
+  const d = new Date(ts * 1000);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleString();
 }
 
 function msgPreview(msg: Message): string {
@@ -271,7 +273,9 @@ async function loadSessions() {
   try {
     const data = await get<{ name: string }[]>("/api/sessions?all=true");
     sessions.value = data.map((s) => s.name);
-  } catch {}
+  } catch {
+    error("Failed to load sessions");
+  }
 }
 
 async function loadSummary() {
@@ -280,7 +284,9 @@ async function loadSummary() {
     if (filterSession.value) params.set("session", filterSession.value);
     const data = await get<typeof summary>(`/api/analytics/summary?${params}`);
     Object.assign(summary, data);
-  } catch {}
+  } catch {
+    error("Failed to load summary");
+  }
 }
 
 async function loadChart() {
@@ -291,6 +297,7 @@ async function loadChart() {
     chartData.value = data;
   } catch {
     chartData.value = [];
+    error("Failed to load chart data");
   }
 }
 

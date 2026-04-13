@@ -180,6 +180,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useWahaApi } from "~/composables/useWahaApi";
 import { useToast } from "~/composables/useToast";
 
