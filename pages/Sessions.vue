@@ -244,7 +244,21 @@
     <div v-if="qrSession" class="modal-overlay" @click.self="qrSession = ''">
       <div class="modal-box" style="text-align: center">
         <div class="modal-title">Scan QR Code — {{ qrSession }}</div>
-        <div v-if="qrData" style="margin: 20px auto">
+        <div
+          v-if="qrData === 'pending'"
+          class="empty-state-text"
+          style="padding: 40px 0"
+        >
+          Waiting for session to be ready…
+        </div>
+        <div
+          v-else-if="qrData === 'timeout'"
+          class="empty-state-text"
+          style="padding: 40px 0; color: #f59e0b"
+        >
+          Session did not enter QR state in time.<br />Please try again.
+        </div>
+        <div v-else-if="qrData" style="margin: 20px auto">
           <img
             :src="qrData"
             alt="QR Code"
@@ -711,6 +725,30 @@ async function openQr(name: string) {
   qrSession.value = name;
   qrData.value = "";
   try {
+    // If session is not in SCAN_QR_CODE, it may still be starting up.
+    // Poll until it's ready (max 30s)
+    const session = sessions.value.find((s) => s.name === name);
+    if (session && session.status !== "SCAN_QR_CODE") {
+      qrData.value = "pending"; // signals "waiting for session to be ready"
+      for (let i = 0; i < 30; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        const updated = sessions.value.find((s) => s.name === name);
+        if (updated?.status === "SCAN_QR_CODE") {
+          break;
+        }
+        if (updated?.status === "WORKING" || updated?.status === "FAILED") {
+          qrData.value = "";
+          error("Session changed status while waiting for QR");
+          return;
+        }
+      }
+      if (qrData.value === "pending") {
+        qrData.value = "timeout";
+        error("Session did not enter SCAN_QR_CODE state in time");
+        return;
+      }
+    }
+
     const data = await get<{ mimetype?: string; data?: string }>(
       `/api/${name}/auth/qr`,
       { headers: { Accept: "application/json" } } as any,
@@ -719,8 +757,12 @@ async function openQr(name: string) {
       data?.mimetype && data?.data
         ? `data:${data.mimetype};base64,${data.data}`
         : "";
-  } catch {
-    error("Failed to load QR code");
+  } catch (err: unknown) {
+    const msg =
+      (err as { data?: { message?: string } })?.data?.message ??
+      "Failed to load QR code";
+    error(msg);
+    qrData.value = "";
   }
 }
 
