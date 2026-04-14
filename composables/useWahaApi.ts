@@ -67,10 +67,11 @@ export function useWahaApi() {
     extra?: Record<string, unknown>,
   ): Promise<T> {
     await init();
-    return $fetch<T>(`${apiBase()}${path}`, {
-      headers: headers(),
+    const merged: Record<string, unknown> = {
       ...extra,
-    });
+      headers: { ...headers(), ...(extra?.headers as Record<string, string>) },
+    };
+    return $fetch<T>(`${apiBase()}${path}`, merged);
   }
 
   async function post<T>(path: string, body?: unknown): Promise<T> {
