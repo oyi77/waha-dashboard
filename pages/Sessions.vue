@@ -38,6 +38,30 @@
       </div>
     </div>
 
+    <!-- Stat Cards -->
+    <div class="grid-5 stagger" style="margin-bottom: 24px">
+      <div class="stat-card card">
+        <div class="stat-label">Total</div>
+        <div class="stat-value">{{ sessions.length }}</div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-label">Working</div>
+        <div class="stat-value stat-working">{{ workingCount }}</div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-label">Failed</div>
+        <div class="stat-value stat-failed">{{ failedCount }}</div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-label">Stopped</div>
+        <div class="stat-value stat-stopped">{{ stoppedCount }}</div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-label">Scan QR</div>
+        <div class="stat-value stat-scan">{{ scanQrCount }}</div>
+      </div>
+    </div>
+
     <!-- Filter Bar -->
     <div class="filter-bar">
       <div class="filter-tabs">
@@ -45,9 +69,13 @@
           v-for="tab in statusTabs"
           :key="tab.value"
           class="filter-tab"
-          :class="{ active: filterStatus === tab.value }"
+          :class="{
+            active: filterStatus === tab.value,
+            [`filter-${tab.value.toLowerCase().replace('_', '-')}`]: true,
+          }"
           @click="filterStatus = tab.value"
         >
+          <span class="filter-tab-dot" :class="`dot-${tab.value.toLowerCase().replace('_', '-')}`" />
           {{ tab.label }}
           <span class="filter-count">{{ tabCount(tab.value) }}</span>
         </button>
@@ -77,18 +105,20 @@
 
     <div v-if="loading" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading sessions…</div>
+      <div class="empty-state-text">Loading sessions...</div>
     </div>
 
     <div v-else-if="filteredSessions.length === 0" class="empty-state">
-      <div class="empty-state-icon">◎</div>
-      <div class="empty-state-text">
-        {{
-          sessions.length === 0
-            ? "No sessions yet. Create one to get started."
-            : "No sessions match your filter."
-        }}
-      </div>
+      <div class="empty-state-icon">{{ emptyIcon }}</div>
+      <div class="empty-state-text">{{ emptyText }}</div>
+      <button
+        v-if="sessions.length === 0"
+        class="btn-primary"
+        style="margin-top: 16px"
+        @click="showCreate = true"
+      >
+        + Create First Session
+      </button>
     </div>
 
     <div v-else class="sessions-grid stagger">
@@ -96,106 +126,108 @@
         v-for="session in filteredSessions"
         :key="session.name"
         class="session-card card"
-        :class="{ selected: selected.has(session.name) }"
+        :class="{
+          selected: selected.has(session.name),
+          [`status-${session.status.toLowerCase().replace('_', '-')}`]: true,
+        }"
       >
-        <div class="session-card-top">
-          <div class="session-left">
-            <label class="session-checkbox" @click.stop>
-              <input
-                type="checkbox"
-                :aria-label="`Select session ${session.name}`"
-                :checked="selected.has(session.name)"
-                @change="toggleSelect(session.name)"
-              />
-            </label>
-            <div>
-              <div class="session-name">{{ session.name }}</div>
-              <div class="session-meta">
-                <span class="badge" :class="statusClass(session.status)">
-                  <span class="badge-dot" />{{ session.status }}
-                </span>
-                <span
-                  class="badge"
-                  :class="`engine-${(session.engine || 'noweb').toLowerCase()}`"
-                >
-                  {{ session.engine || "NOWEB" }}
-                </span>
-              </div>
+        <!-- Card Header -->
+        <div class="session-card-header">
+          <label class="session-checkbox" @click.stop>
+            <input
+              type="checkbox"
+              :aria-label="`Select session ${session.name}`"
+              :checked="selected.has(session.name)"
+              @change="toggleSelect(session.name)"
+            />
+          </label>
+          <div class="session-info">
+            <div class="session-name">{{ session.name }}</div>
+            <div v-if="session.me?.pushName" class="session-phone">
+              {{ session.me.pushName }}
+              <span class="text-dim"> · +{{ session.me.id?.replace("@s.whatsapp.net", "") }}</span>
             </div>
           </div>
-          <div class="session-actions">
-            <button
-              v-if="session.status === 'FAILED'"
-              class="btn-secondary action-btn"
-              title="Restart session"
-              aria-label="Restart session"
-              @click="confirmStart(session.name)"
-            >
-              ↻
-            </button>
-            <button
-              v-if="session.status === 'STOPPED'"
-              class="btn-secondary action-btn"
-              title="Start session"
-              aria-label="Start session"
-              @click="confirmStart(session.name)"
-            >
-              ▶
-            </button>
-            <button
-              v-if="session.status === 'WORKING'"
-              class="btn-ghost action-btn"
-              title="Restart session"
-              aria-label="Restart session"
-              @click="confirmRestart(session.name)"
-            >
-              ↻
-            </button>
-            <button
-              v-if="session.status === 'SCAN_QR_CODE'"
-              class="btn-secondary action-btn"
-              @click="openQr(session.name)"
-            >
-              ⊡
-            </button>
-            <button
-              class="btn-ghost action-btn"
-              title="Session settings"
-              aria-label="Session settings"
-              @click="editSession(session)"
-            >
-              ⚙
-            </button>
-            <button
-              class="btn-danger action-btn"
-              title="Delete session"
-              aria-label="Delete session"
-              @click="confirmDelete(session.name)"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-
-        <!-- Tags -->
-        <div v-if="getTags(session).length > 0" class="session-tags">
-          <span
-            v-for="tag in getTags(session)"
-            :key="tag"
-            class="tag-pill"
-            :class="{ active: filterTag === tag }"
-            @click="toggleTagFilter(tag)"
-          >
-            {{ tag }}
+          <span class="badge" :class="statusClass(session.status)">
+            <span class="badge-dot" />{{ session.status }}
           </span>
         </div>
 
-        <div v-if="session.me" class="session-me">
-          <span class="me-avatar">{{ avatarLetter(session.me.pushName) }}</span>
-          <span>{{ session.me.pushName }}</span>
-          <span class="text-dim" style="font-size: 12px"
-            >+{{ session.me.id?.replace("@s.whatsapp.net", "") }}</span
+        <!-- Engine + Tags Row -->
+        <div class="session-meta-row">
+          <span
+            class="badge"
+            :class="`engine-${(session.engine || 'noweb').toLowerCase()}`"
           >
+            {{ session.engine || "NOWEB" }}
+          </span>
+          <div v-if="getTags(session).length > 0" class="session-tags">
+            <span
+              v-for="tag in getTags(session)"
+              :key="tag"
+              class="tag-pill"
+              :class="{ active: filterTag === tag }"
+              @click="toggleTagFilter(tag)"
+            >
+              {{ tag }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="session-actions">
+          <button
+            v-if="session.status === 'FAILED'"
+            class="action-btn action-restart"
+            title="Restart session"
+            aria-label="Restart session"
+            @click="confirmStart(session.name)"
+          >
+            ↻ Restart
+          </button>
+          <button
+            v-if="session.status === 'STOPPED'"
+            class="action-btn action-start"
+            title="Start session"
+            aria-label="Start session"
+            @click="confirmStart(session.name)"
+          >
+            ▶ Start
+          </button>
+          <button
+            v-if="session.status === 'WORKING'"
+            class="action-btn action-restart"
+            title="Restart session"
+            aria-label="Restart session"
+            @click="confirmRestart(session.name)"
+          >
+            ↻ Restart
+          </button>
+          <button
+            v-if="session.status === 'SCAN_QR_CODE'"
+            class="action-btn action-qr"
+            title="Scan QR Code"
+            aria-label="Scan QR Code"
+            @click="openQr(session.name)"
+          >
+            ⊡ Scan QR
+          </button>
+          <button
+            class="action-btn action-settings"
+            title="Session settings"
+            aria-label="Session settings"
+            @click="editSession(session)"
+          >
+            ⚙ Settings
+          </button>
+          <button
+            class="action-btn action-delete"
+            title="Delete session"
+            aria-label="Delete session"
+            @click="confirmDelete(session.name)"
+          >
+            ✕ Delete
+          </button>
         </div>
       </div>
     </div>
@@ -263,7 +295,7 @@
           class="empty-state-text"
           style="padding: 40px 0"
         >
-          Waiting for session to be ready…
+          Waiting for session to be ready...
         </div>
         <div
           v-else-if="qrData === 'timeout'"
@@ -280,7 +312,7 @@
           />
         </div>
         <div v-else class="empty-state-text" style="padding: 40px 0">
-          Loading QR…
+          Loading QR...
         </div>
         <button
           class="btn-ghost"
@@ -386,6 +418,40 @@ const stoppedCount = computed(
 const workingCount = computed(
   () => sessions.value.filter((s) => s.status === "WORKING").length,
 );
+const failedCount = computed(
+  () => sessions.value.filter((s) => s.status === "FAILED").length,
+);
+const scanQrCount = computed(
+  () => sessions.value.filter((s) => s.status === "SCAN_QR_CODE").length,
+);
+
+const emptyIcon = computed(() => {
+  if (sessions.value.length === 0) return "◎";
+  const map: Record<string, string> = {
+    ALL: "◎",
+    WORKING: "●",
+    STARTING: "◉",
+    STOPPED: "○",
+    SCAN_QR_CODE: "⊡",
+    FAILED: "⊘",
+  };
+  return map[filterStatus.value] ?? "◎";
+});
+
+const emptyText = computed(() => {
+  if (sessions.value.length === 0) {
+    return "No sessions yet. Create one to get started.";
+  }
+  const map: Record<string, string> = {
+    ALL: "No sessions match your filter.",
+    WORKING: "No working sessions right now.",
+    STARTING: "No sessions are starting.",
+    STOPPED: "No stopped sessions.",
+    SCAN_QR_CODE: "No sessions waiting for QR scan.",
+    FAILED: "No failed sessions. All clear!",
+  };
+  return map[filterStatus.value] ?? "No sessions match your filter.";
+});
 
 const allTags = computed(() => {
   const tags = new Set<string>();
@@ -843,136 +909,58 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.sessions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+/* ── Stat Cards ── */
+.stat-card {
+  text-align: center;
+  padding: 20px 16px;
 }
 
-.session-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: border-color 0.15s;
+.stat-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
 }
 
-.session-card.selected {
-  border-color: var(--accent);
-  background: rgba(34, 197, 94, 0.04);
-}
-
-.session-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.session-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.session-checkbox {
-  margin-top: 2px;
-  cursor: pointer;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.session-checkbox input {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--accent);
-}
-
-.session-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-
-.session-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  display: inline-block;
-  margin-right: 4px;
-}
-
-.session-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.session-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tag-pill {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 99px;
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--accent);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.tag-pill:hover,
-.tag-pill.active {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: var(--accent);
-}
-
-.session-me {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-muted);
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-}
-
-.me-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--accent);
-  font-size: 13px;
+.stat-value {
+  font-size: 28px;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
+  font-family: var(--font-mono, monospace);
+  color: var(--text);
 }
 
-.text-dim {
+.stat-working {
+  color: var(--accent);
+}
+.stat-failed {
+  color: #ef4444;
+}
+.stat-stopped {
   color: var(--text-dim);
 }
+.stat-scan {
+  color: #60a5fa;
+}
 
-/* Filter Bar */
+/* ── 5-column grid for stat cards ── */
+.grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .grid-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .grid-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Filter Bar ── */
 .filter-bar {
   display: flex;
   align-items: center;
@@ -1001,6 +989,7 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
+  min-height: 36px;
 }
 
 .filter-tab:hover {
@@ -1012,6 +1001,32 @@ onUnmounted(() => {
   background: rgba(34, 197, 94, 0.12);
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.filter-tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-all {
+  background: var(--text-dim);
+}
+.dot-working {
+  background: #4ade80;
+}
+.dot-starting {
+  background: #fbbf24;
+}
+.dot-stopped {
+  background: #9ca3af;
+}
+.dot-scan-qr-code {
+  background: #60a5fa;
+}
+.dot-failed {
+  background: #f87171;
 }
 
 .filter-count {
@@ -1042,7 +1057,7 @@ onUnmounted(() => {
   border-color: var(--accent);
 }
 
-/* Bulk Bar */
+/* ── Bulk Bar ── */
 .bulk-bar {
   display: flex;
   align-items: center;
@@ -1062,13 +1077,200 @@ onUnmounted(() => {
   margin-right: 4px;
 }
 
-.action-btn {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 8px;
-  font-size: 16px;
+/* ── Sessions Grid ── */
+.sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
+@media (max-width: 1100px) {
+  .sessions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .sessions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Session Card ── */
+.session-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.15s;
+  position: relative;
+}
+
+.session-card.selected {
+  border-color: var(--accent);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.session-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.session-checkbox {
+  margin-top: 3px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.session-checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-phone {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-dim {
+  color: var(--text-dim);
+}
+
+/* ── Meta Row (engine + tags) ── */
+.session-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tag-pill:hover,
+.tag-pill.active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--accent);
+}
+
+/* ── Action Buttons ── */
+.session-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.action-btn {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  border-color: var(--border-hover);
+}
+
+.action-start {
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+.action-start:hover {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: var(--accent);
+}
+
+.action-restart {
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.action-restart:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+.action-qr {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+.action-qr:hover {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: #f59e0b;
+}
+
+.action-settings {
+  color: var(--text-dim);
+}
+.action-settings:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.action-delete {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.action-delete:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+
+/* ── Mobile filter bar ── */
 @media (max-width: 600px) {
   .filter-bar {
     flex-direction: column;
@@ -1076,6 +1278,11 @@ onUnmounted(() => {
   .filter-search {
     width: 100%;
     min-width: unset;
+  }
+  .action-btn {
+    min-height: 44px;
+    font-size: 12px;
+    padding: 8px 8px;
   }
 }
 </style>

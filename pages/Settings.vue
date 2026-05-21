@@ -8,15 +8,65 @@
     </div>
 
     <div class="settings-sections">
+      <!-- Session Health -->
+      <div class="settings-section card">
+        <div class="section-title">
+          <span class="section-icon">💚</span>
+          Session Health
+        </div>
+        <div v-if="healthLoading" class="health-loading">
+          Loading health data...
+        </div>
+        <div v-else-if="healthData" class="health-grid">
+          <div class="health-card health-total">
+            <div class="health-value">{{ healthData.total }}</div>
+            <div class="health-label">Total</div>
+          </div>
+          <div class="health-card health-working">
+            <div class="health-value">{{ healthData.working }}</div>
+            <div class="health-label">Working</div>
+          </div>
+          <div class="health-card health-failed">
+            <div class="health-value">{{ healthData.failed }}</div>
+            <div class="health-label">Failed</div>
+          </div>
+          <div class="health-card health-qr">
+            <div class="health-value">{{ healthData.scan_qr }}</div>
+            <div class="health-label">Scan QR</div>
+          </div>
+          <div class="health-card health-stopped">
+            <div class="health-value">{{ healthData.stopped }}</div>
+            <div class="health-label">Stopped</div>
+          </div>
+        </div>
+        <div v-else class="health-unavailable">
+          Health data unavailable
+        </div>
+        <div v-if="healthData" class="health-footer">
+          <span class="health-meta">
+            Auto-restart: {{ healthData.autoRestartEnabled ? "Enabled" : "Disabled" }}
+          </span>
+          <span class="health-meta">
+            Last check: {{ formatTimestamp(healthData.lastCheck) }}
+          </span>
+          <button class="btn-link" @click="loadHealth">Refresh</button>
+        </div>
+      </div>
+
       <!-- Session Lifecycle -->
       <div class="settings-section card">
-        <div class="section-title">Session Lifecycle</div>
+        <div class="section-title">
+          <span class="section-icon">🔄</span>
+          Session Lifecycle
+        </div>
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
               <div class="settings-label">Auto-restart on boot</div>
               <div class="settings-desc">
-                Automatically restart sessions when WAHA starts
+                When WAHA starts, automatically restart all sessions that were
+                previously running. Disable this if you want to start sessions
+                manually after a server restart.
               </div>
             </div>
             <label class="toggle-switch">
@@ -28,7 +78,9 @@
             <div class="settings-info">
               <div class="settings-label">Auto-restart failed sessions</div>
               <div class="settings-desc">
-                Automatically restart sessions that enter FAILED state
+                When a session enters the FAILED state, automatically attempt
+                to restart it. Checked every 60 seconds. No server restart
+                needed to apply changes.
               </div>
             </div>
             <label class="toggle-switch">
@@ -38,12 +90,12 @@
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">
-                Restart all sessions (not just this worker)
-              </div>
+              <div class="settings-label">Restart all sessions</div>
               <div class="settings-desc">
-                When enabled, restarts every session regardless of worker
-                assignment
+                When enabled, restart commands apply to every session regardless
+                of worker assignment. Useful for single-worker setups. In
+                multi-worker deployments, leave this off so each worker only
+                manages its own sessions.
               </div>
             </div>
             <label class="toggle-switch">
@@ -55,7 +107,9 @@
             <div class="settings-info">
               <div class="settings-label">Auto-start delay (seconds)</div>
               <div class="settings-desc">
-                Wait time before auto-starting sessions on boot
+                Wait time in seconds before auto-starting sessions on boot.
+                Set to 0 for immediate startup. Increase if your server needs
+                time to initialize dependencies (e.g. database, Redis).
               </div>
             </div>
             <input
@@ -71,7 +125,10 @@
             <div class="settings-info">
               <div class="settings-label">Default engine</div>
               <div class="settings-desc">
-                Engine used when creating sessions without explicit selection
+                The WhatsApp engine used when creating sessions without
+                specifying one explicitly. "Auto" picks the recommended engine
+                for your setup. Each engine has different trade-offs in terms of
+                speed, reliability, and feature support.
               </div>
             </div>
             <select v-model="settings.defaultEngine" class="settings-select">
@@ -84,22 +141,26 @@
         </div>
         <div class="settings-actions">
           <button class="btn-primary" :disabled="saving" @click="saveSettings">
-            {{ saving ? "Saving…" : "Save Settings" }}
+            {{ saving ? "Saving..." : "Save Settings" }}
           </button>
         </div>
       </div>
 
-      <!-- Dashboard -->
+      <!-- Dashboard Security -->
       <div class="settings-section card">
-        <div class="section-title">Dashboard</div>
+        <div class="section-title">
+          <span class="section-icon">🔒</span>
+          Dashboard Security
+        </div>
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Username</div>
+              <div class="settings-label">Current username</div>
               <div class="settings-desc">
-                {{ dashboardSettings.username || "—" }} ({{
-                  dashboardSettings.source
-                }})
+                {{ dashboardSettings.username || "Not set" }}
+                <span v-if="dashboardSettings.source" class="badge badge-working">
+                  {{ dashboardSettings.source }}
+                </span>
               </div>
             </div>
           </div>
@@ -107,7 +168,8 @@
             <div class="settings-info">
               <div class="settings-label">Change credentials</div>
               <div class="settings-desc">
-                Update dashboard username and password
+                Update the dashboard login username and password. Credentials
+                stored in the database take priority over environment variables.
               </div>
             </div>
             <button class="btn-secondary" @click="showCredentials = true">
@@ -117,9 +179,35 @@
         </div>
       </div>
 
+      <!-- API Configuration -->
+      <div class="settings-section card">
+        <div class="section-title">
+          <span class="section-icon">🔑</span>
+          API Configuration
+        </div>
+        <div class="settings-list">
+          <div class="settings-row">
+            <div class="settings-info">
+              <div class="settings-label">API Key</div>
+              <div class="settings-desc">
+                Used to authenticate REST API requests via the
+                <code>X-Api-Key</code> header. Configure via the
+                <code>WAHA_API_KEY</code> environment variable.
+              </div>
+            </div>
+            <div class="api-key-display">
+              <code class="mono">{{ apiKeyMasked }}</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Workers -->
       <div class="settings-section card">
-        <div class="section-title">Workers</div>
+        <div class="section-title">
+          <span class="section-icon">⚙</span>
+          Workers
+        </div>
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
@@ -140,7 +228,10 @@
 
       <!-- About -->
       <div class="settings-section card">
-        <div class="section-title">About</div>
+        <div class="section-title">
+          <span class="section-icon">ℹ</span>
+          About
+        </div>
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
@@ -156,7 +247,7 @@
               <div class="settings-desc">
                 <span class="badge badge-working">Core</span>
                 or
-                <span class="badge badge-working">Plus ⚡</span>
+                <span class="badge badge-working">Plus</span>
               </div>
             </div>
           </div>
@@ -172,44 +263,63 @@
     >
       <div class="modal-box">
         <div class="modal-title">Change Credentials</div>
-        <div class="form-group">
-          <label class="form-label">Current Password</label>
-          <input v-model="credForm.currentPassword" type="password" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">New Username</label>
-          <input v-model="credForm.newUsername" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">New Password</label>
-          <input v-model="credForm.newPassword" type="password" />
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 20px">
-          <button
-            class="btn-secondary"
-            style="flex: 1"
-            @click="showCredentials = false"
-          >
-            Cancel
-          </button>
-          <button
-            class="btn-primary"
-            style="flex: 1"
-            :disabled="credSaving"
-            @click="saveCredentials"
-          >
-            {{ credSaving ? "Saving…" : "Save" }}
-          </button>
-        </div>
+        <form @submit.prevent="saveCredentials">
+          <div class="form-group">
+            <label class="form-label" for="cred-current">Current Password</label>
+            <input
+              id="cred-current"
+              v-model="credForm.currentPassword"
+              type="password"
+              class="form-input"
+              placeholder="Enter current password"
+              autocomplete="current-password"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cred-username">New Username</label>
+            <input
+              id="cred-username"
+              v-model="credForm.newUsername"
+              type="text"
+              class="form-input"
+              placeholder="Enter new username"
+              autocomplete="username"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cred-password">New Password</label>
+            <input
+              id="cred-password"
+              v-model="credForm.newPassword"
+              type="password"
+              class="form-input"
+              placeholder="At least 6 characters"
+              autocomplete="new-password"
+            />
+          </div>
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              @click="showCredentials = false"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn-primary"
+              :disabled="credSaving"
+            >
+              {{ credSaving ? "Saving..." : "Save" }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
-
-    <!-- Toast notifications handled by useToast() -->
   </div>
 </template>
 
 <script setup lang="ts">
-
 
 interface ServerStatus {
   startTimestamp: number;
@@ -230,6 +340,16 @@ interface SessionLcSettings {
   autoStartDelay: number;
 }
 
+interface SessionHealthSummary {
+  total: number;
+  working: number;
+  failed: number;
+  scan_qr: number;
+  stopped: number;
+  lastCheck: string;
+  autoRestartEnabled: boolean;
+}
+
 const { get, put } = useWahaApi();
 const { success, error } = useToast();
 
@@ -240,6 +360,9 @@ const dashboardSettings = ref<DashboardSettings>({ username: "", source: "" });
 
 const showCredentials = ref(false);
 const credSaving = ref(false);
+
+const healthData = ref<SessionHealthSummary | null>(null);
+const healthLoading = ref(true);
 
 // Session lifecycle settings from API (persisted to DB)
 const sessionLc = reactive<SessionLcSettings>({
@@ -272,6 +395,33 @@ const uptimeFormatted = computed(() => {
   if (mins > 0) return `${mins}m ${secs}s`;
   return `${secs}s`;
 });
+
+const apiKeyMasked = computed(() => {
+  const key = "";
+  if (!key) return "Not configured";
+  if (key.length <= 4) return "****";
+  return "****" + key.slice(-4);
+});
+
+function formatTimestamp(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString();
+  } catch {
+    return iso;
+  }
+}
+
+async function loadHealth() {
+  healthLoading.value = true;
+  try {
+    healthData.value = await get<SessionHealthSummary>("/api/health/sessions");
+  } catch {
+    healthData.value = null;
+  } finally {
+    healthLoading.value = false;
+  }
+}
 
 async function load() {
   try {
@@ -357,6 +507,7 @@ async function saveCredentials() {
 
 onMounted(() => {
   load();
+  loadHealth();
 });
 </script>
 
@@ -373,10 +524,18 @@ onMounted(() => {
 }
 
 .section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 16px;
+}
+
+.section-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .settings-list {
@@ -414,9 +573,18 @@ onMounted(() => {
 .settings-desc {
   font-size: 12px;
   color: var(--text-dim);
+  line-height: 1.5;
 }
 
 .settings-desc.mono {
+  font-family: var(--font-mono, monospace);
+}
+
+.settings-desc code {
+  background: var(--surface);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
   font-family: var(--font-mono, monospace);
 }
 
@@ -457,11 +625,13 @@ onMounted(() => {
   border-top: 1px solid var(--border);
 }
 
+/* Toggle switch */
+
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 22px;
+  width: 44px;
+  height: 24px;
   flex-shrink: 0;
 }
 
@@ -476,20 +646,21 @@ onMounted(() => {
   cursor: pointer;
   inset: 0;
   background: var(--border);
-  border-radius: 22px;
-  transition: 0.2s;
+  border-radius: 24px;
+  transition: background 0.2s ease;
 }
 
 .toggle-slider::before {
   content: "";
   position: absolute;
-  height: 16px;
-  width: 16px;
+  height: 18px;
+  width: 18px;
   left: 3px;
   bottom: 3px;
   background: white;
   border-radius: 50%;
-  transition: 0.2s;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .toggle-switch input:checked + .toggle-slider {
@@ -497,8 +668,15 @@ onMounted(() => {
 }
 
 .toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(18px);
+  transform: translateX(20px);
 }
+
+.toggle-switch input:focus-visible + .toggle-slider {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Badge */
 
 .badge {
   display: inline-block;
@@ -511,5 +689,164 @@ onMounted(() => {
 .badge-working {
   background: rgba(34, 197, 94, 0.15);
   color: var(--accent);
+}
+
+/* Session Health grid */
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.health-card {
+  text-align: center;
+  padding: 12px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.health-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  line-height: 1.2;
+}
+
+.health-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.health-total .health-value {
+  color: var(--text);
+}
+
+.health-working .health-value {
+  color: var(--accent);
+}
+
+.health-failed .health-value {
+  color: #ef4444;
+}
+
+.health-qr .health-value {
+  color: #f59e0b;
+}
+
+.health-stopped .health-value {
+  color: var(--text-dim);
+}
+
+.health-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.health-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  opacity: 0.8;
+}
+
+.health-loading,
+.health-unavailable {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 12px 0;
+}
+
+/* API Key display */
+
+.api-key-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-key-display code {
+  font-size: 13px;
+  padding: 4px 10px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* Modal improvements */
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  flex: 1;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  .health-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .settings-section {
+    padding: 16px;
+  }
+
+  .settings-row {
+    gap: 10px;
+  }
+
+  .health-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
 }
 </style>
