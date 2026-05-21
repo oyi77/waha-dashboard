@@ -14,7 +14,7 @@
         <div class="page-title">◉ Event Monitor</div>
         <div class="page-subtitle">Live webhook event stream</div>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center">
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
         <span
           class="badge"
           :class="connected ? 'badge-working' : 'badge-failed'"
@@ -36,7 +36,7 @@
 
     <div class="terminal-container">
       <div class="terminal-header">
-        <div class="terminal-dots">
+        <div class="terminal-dots" aria-hidden="true">
           <span class="dot red"></span>
           <span class="dot yellow"></span>
           <span class="dot green"></span>
@@ -57,7 +57,14 @@
           <span class="event-time">[{{ evt.time }}]</span>
           <span class="event-session">[{{ evt.session }}]</span>
           <span class="event-type">{{ evt.type }}</span>
-          <span class="event-payload">{{ evt.payload }}</span>
+          <span
+            class="event-payload"
+            :class="{ 'event-payload-truncated': evt.payload.length > 200 && !evt.expanded }"
+            @click="evt.expanded = !evt.expanded"
+            :role="evt.payload.length > 200 ? 'button' : undefined"
+            :tabindex="evt.payload.length > 200 ? 0 : undefined"
+            @keydown.enter="evt.expanded = !evt.expanded"
+          >{{ evt.expanded || evt.payload.length <= 200 ? evt.payload : evt.payload.slice(0, 200) + '...' }}</span>
         </div>
       </div>
     </div>
@@ -72,6 +79,7 @@ interface EventItem {
   session: string;
   type: string;
   payload: string;
+  expanded?: boolean;
 }
 
 const { init, apiKey } = useWahaApi();
@@ -197,6 +205,7 @@ function pushLog(session: string, type: string, payload: string) {
     session,
     type,
     payload,
+    expanded: false,
   });
 
   if (events.value.length > 100) {
@@ -259,8 +268,8 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 160px);
-  min-height: 400px;
+  flex: 1;
+  min-height: 300px;
 }
 
 .terminal-header {
@@ -340,6 +349,11 @@ onUnmounted(() => {
 .event-payload {
   color: var(--text-muted);
   flex: 1;
+}
+
+.event-payload-truncated {
+  cursor: pointer;
+  text-decoration: underline dotted;
 }
 
 .badge-dot {

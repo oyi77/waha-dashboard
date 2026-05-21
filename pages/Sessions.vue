@@ -103,6 +103,7 @@
             <label class="session-checkbox" @click.stop>
               <input
                 type="checkbox"
+                :aria-label="`Select session ${session.name}`"
                 :checked="selected.has(session.name)"
                 @change="toggleSelect(session.name)"
               />
@@ -125,40 +126,52 @@
           <div class="session-actions">
             <button
               v-if="session.status === 'FAILED'"
-              class="btn-secondary"
+              class="btn-secondary action-btn"
+              title="Restart session"
+              aria-label="Restart session"
               @click="confirmStart(session.name)"
             >
               ↻
             </button>
             <button
               v-if="session.status === 'STOPPED'"
-              class="btn-secondary"
+              class="btn-secondary action-btn"
+              title="Start session"
+              aria-label="Start session"
               @click="confirmStart(session.name)"
             >
               ▶
             </button>
             <button
               v-if="session.status === 'WORKING'"
-              class="btn-ghost"
+              class="btn-ghost action-btn"
+              title="Restart session"
+              aria-label="Restart session"
               @click="confirmRestart(session.name)"
             >
               ↻
             </button>
             <button
               v-if="session.status === 'SCAN_QR_CODE'"
-              class="btn-secondary"
+              class="btn-secondary action-btn"
               @click="openQr(session.name)"
             >
               ⊡
             </button>
             <button
-              class="btn-ghost"
-              style="padding: 4px 8px; font-size: 13px"
+              class="btn-ghost action-btn"
+              title="Session settings"
+              aria-label="Session settings"
               @click="editSession(session)"
             >
               ⚙
             </button>
-            <button class="btn-danger" @click="confirmDelete(session.name)">
+            <button
+              class="btn-danger action-btn"
+              title="Delete session"
+              aria-label="Delete session"
+              @click="confirmDelete(session.name)"
+            >
               ✕
             </button>
           </div>
@@ -192,8 +205,9 @@
       v-if="showCreate || editTarget !== null"
       class="modal-overlay"
       @click.self="closeModal"
+      @keydown.escape="closeModal"
     >
-      <div class="modal-box">
+      <div class="modal-box" tabindex="-1">
         <div class="modal-title">
           {{ editTarget !== null ? "Edit Session" : "Create Session" }}
         </div>
@@ -241,7 +255,7 @@
     </div>
 
     <!-- QR Modal -->
-    <div v-if="qrSession" class="modal-overlay" @click.self="qrSession = ''">
+    <div v-if="qrSession" class="modal-overlay" @click.self="qrSession = ''" @keydown.escape="qrSession = ''">
       <div class="modal-box" style="text-align: center">
         <div class="modal-title">Scan QR Code — {{ qrSession }}</div>
         <div
@@ -283,8 +297,9 @@
       v-if="confirmAction"
       class="modal-overlay"
       @click.self="confirmAction = null"
+      @keydown.escape="confirmAction = null"
     >
-      <div class="modal-box">
+      <div class="modal-box" tabindex="-1">
         <div class="modal-title">{{ confirmAction.title }}</div>
         <p
           style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px"
@@ -830,7 +845,7 @@ onUnmounted(() => {
 <style scoped>
 .sessions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 
@@ -1045,5 +1060,22 @@ onUnmounted(() => {
   font-weight: 600;
   color: var(--accent);
   margin-right: 4px;
+}
+
+.action-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  font-size: 16px;
+}
+
+@media (max-width: 600px) {
+  .filter-bar {
+    flex-direction: column;
+  }
+  .filter-search {
+    width: 100%;
+    min-width: unset;
+  }
 }
 </style>

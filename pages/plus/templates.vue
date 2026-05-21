@@ -29,7 +29,8 @@
       <div class="empty-state-text">No templates yet</div>
     </div>
 
-    <div v-else class="card" style="padding: 0; overflow: hidden">
+    <div v-else class="card" style="padding: 0">
+      <div style="overflow-x: auto">
       <table>
         <thead>
           <tr>
@@ -58,10 +59,10 @@
             </td>
             <td>
               <div style="display: flex; gap: 6px">
-                <button class="btn-secondary" @click="openSend(tmpl)">
+                <button class="btn-secondary" aria-label="Send template" @click="openSend(tmpl)">
                   ▶ Send
                 </button>
-                <button class="btn-danger" @click="deleteTemplate(tmpl.id)">
+                <button class="btn-danger" aria-label="Delete template" @click="confirmDelete(tmpl)">
                   ✕
                 </button>
               </div>
@@ -69,6 +70,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <div
@@ -113,6 +115,27 @@
           </button>
           <button class="btn-primary" style="flex: 1" @click="createTemplate">
             Create
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="deleteConfirm.open"
+      class="modal-overlay"
+      @click.self="deleteConfirm.open = false"
+    >
+      <div class="modal-box">
+        <div class="modal-title">Delete Template</div>
+        <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 20px">
+          Are you sure you want to delete <strong style="color: var(--text)">{{ deleteConfirm.name }}</strong>?
+        </p>
+        <div style="display: flex; gap: 10px">
+          <button class="btn-secondary" style="flex: 1" @click="deleteConfirm.open = false">
+            Cancel
+          </button>
+          <button class="btn-danger" style="flex: 1" @click="deleteTemplate">
+            Delete
           </button>
         </div>
       </div>
@@ -179,6 +202,12 @@ const createForm = reactive({
   payload: '{"text": "Hello!"}',
 });
 
+const deleteConfirm = reactive({
+  open: false,
+  id: "",
+  name: "",
+});
+
 const sendModal = reactive({
   open: false,
   id: "",
@@ -239,7 +268,15 @@ async function createTemplate() {
   }
 }
 
-async function deleteTemplate(id: string) {
+function confirmDelete(tmpl: Template) {
+  deleteConfirm.open = true;
+  deleteConfirm.id = tmpl.id;
+  deleteConfirm.name = tmpl.name;
+}
+
+async function deleteTemplate() {
+  const id = deleteConfirm.id;
+  deleteConfirm.open = false;
   try {
     await del(`/api/templates/${id}`);
     success("Deleted");
