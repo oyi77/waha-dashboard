@@ -180,9 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useWahaApi } from "~/composables/useWahaApi";
-import { useToast } from "~/composables/useToast";
+
 
 interface SessionMe {
   id: string;
@@ -297,7 +295,7 @@ async function load(): Promise<void> {
       }
     }
   } catch (err: unknown) {
-    error("Failed to load worker info");
+    error("Failed to load worker info: " + extractApiError(err));
   } finally {
     loading.value = false;
   }
@@ -329,7 +327,7 @@ async function switchEngine() {
     success(`Successfully switched engine for ${name}`);
     await load();
   } catch (err: unknown) {
-    error("Failed to switch engine");
+    error("Failed to switch engine: " + extractApiError(err));
   } finally {
     isSwitching.value = false;
     closeSessionDetail();
@@ -338,13 +336,32 @@ async function switchEngine() {
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
+function startPolling() {
+  pollTimer = setInterval(load, 15000);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
 onMounted(async () => {
   await load();
-  pollTimer = setInterval(load, 15000);
+  startPolling();
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      stopPolling();
+    } else {
+      load();
+      startPolling();
+    }
+  });
 });
 
 onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer);
+  stopPolling();
 });
 </script>
 

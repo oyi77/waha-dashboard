@@ -19,7 +19,12 @@
       </button>
     </div>
 
-    <div v-if="templates.length === 0" class="empty-state">
+    <div v-if="loading" class="empty-state">
+      <div class="empty-state-icon">⟳</div>
+      <div class="empty-state-text">Loading templates…</div>
+    </div>
+
+    <div v-else-if="templates.length === 0" class="empty-state">
       <div class="empty-state-icon">▣</div>
       <div class="empty-state-text">No templates yet</div>
     </div>
@@ -163,6 +168,7 @@ const { get, post, del } = useWahaApi();
 const { success, error } = useToast();
 
 const templates = ref<Template[]>([]);
+const loading = ref(true);
 const sessions = ref<string[]>([]);
 const showCreate = ref(false);
 
@@ -182,11 +188,14 @@ const sendModal = reactive({
 });
 
 async function loadTemplates() {
+  loading.value = true;
   try {
     const data = await get<Template[]>("/api/templates");
     templates.value = data;
   } catch (e) {
-    error("Failed to load templates");
+    error("Failed to load templates: " + extractApiError(e));
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -194,7 +203,7 @@ async function loadSessions() {
   try {
     const data = await get<{ name: string }[]>("/api/sessions?all=true");
     sessions.value = data.map((s) => s.name);
-  } catch {}
+  } catch (e) { error("Failed to load sessions: " + extractApiError(e)); }
 }
 
 async function createTemplate() {
@@ -225,8 +234,8 @@ async function createTemplate() {
     createForm.tags = "";
     createForm.payload = '{"text": "Hello!"}';
     await loadTemplates();
-  } catch {
-    error("Failed to create template");
+  } catch (e) {
+    error("Failed to create template: " + extractApiError(e));
   }
 }
 
@@ -235,8 +244,8 @@ async function deleteTemplate(id: string) {
     await del(`/api/templates/${id}`);
     success("Deleted");
     await loadTemplates();
-  } catch {
-    error("Failed to delete template");
+  } catch (e) {
+    error("Failed to delete template: " + extractApiError(e));
   }
 }
 
@@ -260,8 +269,8 @@ async function sendTemplate() {
     });
     success("Sent!");
     sendModal.open = false;
-  } catch {
-    error("Failed to send template");
+  } catch (e) {
+    error("Failed to send template: " + extractApiError(e));
   }
 }
 

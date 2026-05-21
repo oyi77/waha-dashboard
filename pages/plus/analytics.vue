@@ -17,7 +17,12 @@
       </select>
     </div>
 
-    <div class="grid-4 stagger" style="margin-bottom: 28px">
+    <div v-if="loading" class="empty-state">
+      <div class="empty-state-icon">⟳</div>
+      <div class="empty-state-text">Loading analytics…</div>
+    </div>
+
+    <div v-else class="grid-4 stagger" style="margin-bottom: 28px">
       <div class="stat-card">
         <div class="stat-card-value">{{ summary.totalSent }}</div>
         <div class="stat-card-label">Sent</div>
@@ -202,6 +207,7 @@ const { get } = useWahaApi();
 const { error } = useToast();
 
 const sessions = ref<string[]>([]);
+const loading = ref(true);
 const filterSession = ref("");
 const filterRange = ref("7");
 const summary = reactive({
@@ -273,19 +279,22 @@ async function loadSessions() {
   try {
     const data = await get<{ name: string }[]>("/api/sessions?all=true");
     sessions.value = data.map((s) => s.name);
-  } catch {
-    error("Failed to load sessions");
+  } catch (e) {
+    error("Failed to load sessions: " + extractApiError(e));
   }
 }
 
 async function loadSummary() {
+  loading.value = true;
   try {
     const params = new URLSearchParams({ days: filterRange.value });
     if (filterSession.value) params.set("session", filterSession.value);
     const data = await get<typeof summary>(`/api/analytics/summary?${params}`);
     Object.assign(summary, data);
-  } catch {
-    error("Failed to load summary");
+  } catch (e) {
+    error("Failed to load summary: " + extractApiError(e));
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -295,9 +304,9 @@ async function loadChart() {
     if (filterSession.value) params.set("session", filterSession.value);
     const data = await get<DailyData[]>(`/api/analytics/daily?${params}`);
     chartData.value = data;
-  } catch {
+  } catch (e) {
     chartData.value = [];
-    error("Failed to load chart data");
+    error("Failed to load chart data: " + extractApiError(e));
   }
 }
 
@@ -310,8 +319,8 @@ async function loadMessages() {
     if (filterSession.value) params.set("session", filterSession.value);
     const data = await get<Message[]>(`/api/messages/log?${params}`);
     messages.value = data;
-  } catch {
-    error("Failed to load messages");
+  } catch (e) {
+    error("Failed to load messages: " + extractApiError(e));
   }
 }
 

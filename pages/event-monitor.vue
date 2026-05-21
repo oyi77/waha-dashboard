@@ -23,6 +23,10 @@
             connected ? "Connected" : "Disconnected"
           }}
         </span>
+        <span
+          class="connection-dot"
+          :class="connected ? 'dot-connected' : 'dot-disconnected'"
+        />
         <button class="btn-ghost" @click="togglePause">
           {{ paused ? "▶ Resume" : "⏸ Pause" }}
         </button>
@@ -40,7 +44,13 @@
         <div class="terminal-title">bash — WAHA Event Stream</div>
       </div>
       <div class="terminal-body font-mono" ref="terminalBody">
-        <div v-if="events.length === 0" class="terminal-empty">
+        <div v-if="showReconnectButton" class="terminal-empty">
+          > Connection lost after {{ MAX_RECONNECT }} attempts.
+          <button class="btn-secondary" style="margin-left: 8px; font-size: 13px" @click="manualReconnect">
+            Reconnect
+          </button>
+        </div>
+        <div v-else-if="events.length === 0" class="terminal-empty">
           > Waiting for incoming events...
         </div>
         <div v-for="(evt, idx) in events" :key="idx" class="event-row">
@@ -55,9 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import { useWahaApi } from "~/composables/useWahaApi";
-import { useToast } from "~/composables/useToast";
+
 
 interface EventItem {
   time: string;
@@ -78,7 +86,7 @@ let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let unmounted = false;
 let reconnectAttempts = 0;
-const MAX_RECONNECT = 5;
+const MAX_RECONNECT = 10;
 
 function formatTime(date: Date) {
   return date.toTimeString().split(" ")[0];
@@ -147,7 +155,7 @@ async function connect() {
         );
         return;
       }
-      pushLog("system", "connection", "Disconnected. Reconnecting in 3s...");
+      pushLog("system", "connection", "Disconnected. Reconnecting with backoff...");
       scheduleReconnect();
     };
 
@@ -160,21 +168,26 @@ async function connect() {
   }
 }
 
+const showReconnectButton = ref(false);
+
 function scheduleReconnect() {
   if (unmounted) return;
   if (reconnectAttempts >= MAX_RECONNECT) {
-    pushLog(
-      "system",
-      "error",
-      "Too many reconnect attempts. Refresh to retry.",
-    );
+    showReconnectButton.value = true;
     return;
   }
   reconnectAttempts++;
+  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 16000);
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = setTimeout(() => {
     connect();
-  }, 3000);
+  }, delay);
+}
+
+function manualReconnect() {
+  showReconnectButton.value = false;
+  reconnectAttempts = 0;
+  connect();
 }
 
 function pushLog(session: string, type: string, payload: string) {
@@ -336,5 +349,23 @@ onUnmounted(() => {
   background: currentColor;
   display: inline-block;
   margin-right: 6px;
+}
+
+.connection-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.dot-connected {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+
+.dot-disconnected {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
 }
 </style>

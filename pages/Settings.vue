@@ -212,9 +212,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
-import { useWahaApi } from "~/composables/useWahaApi";
-import { useToast } from "~/composables/useToast";
+
 
 interface ServerStatus {
   startTimestamp: number;
@@ -306,7 +304,7 @@ async function load() {
       sessionLc.autoStartDelay = lcSettings.value.autoStartDelay;
     }
   } catch (err) {
-    error("Failed to load settings");
+    error("Failed to load settings: " + extractApiError(err));
   }
 }
 
@@ -320,8 +318,8 @@ async function saveSettings() {
       autoStartDelay: sessionLc.autoStartDelay,
     });
     success("Settings saved");
-  } catch {
-    error("Failed to save settings");
+  } catch (e) {
+    error("Failed to save settings: " + extractApiError(e));
   } finally {
     saving.value = false;
   }

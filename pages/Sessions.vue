@@ -313,9 +313,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
-import { useWahaApi } from "~/composables/useWahaApi";
-import { useToast } from "~/composables/useToast";
+
 
 interface Session {
   name: string;
@@ -361,6 +359,7 @@ const form = reactive({
 const statusTabs = [
   { label: "All", value: "ALL" },
   { label: "Working", value: "WORKING" },
+  { label: "Starting", value: "STARTING" },
   { label: "Stopped", value: "STOPPED" },
   { label: "Scan QR", value: "SCAN_QR_CODE" },
   { label: "Failed", value: "FAILED" },
@@ -446,7 +445,7 @@ async function loadSessions() {
     const data = await get<Session[]>("/api/sessions?all=true");
     sessions.value = data;
   } catch (e) {
-    error("Failed to load sessions");
+    error("Failed to load sessions: " + extractApiError(e));
   } finally {
     loading.value = false;
   }
@@ -482,7 +481,7 @@ async function createSession() {
     closeModal();
     await loadSessions();
   } catch (e) {
-    error("Failed to create session");
+    error("Failed to create session: " + extractApiError(e));
   }
 }
 
@@ -511,7 +510,7 @@ async function saveEdit() {
     closeModal();
     await loadSessions();
   } catch (e) {
-    error("Failed to update session");
+    error("Failed to update session: " + extractApiError(e));
   }
 }
 
@@ -528,8 +527,8 @@ function confirmStart(name: string) {
         await post(`/api/sessions/${name}/start`);
         success(`Session ${name} started`);
         await loadSessions();
-      } catch {
-        error("Failed to start session");
+      } catch (e) {
+        error("Failed to start session: " + extractApiError(e));
       }
     },
   };
@@ -547,8 +546,8 @@ function confirmStop(name: string) {
         await post(`/api/sessions/${name}/stop`);
         success(`Session ${name} stopped`);
         await loadSessions();
-      } catch {
-        error("Failed to stop session");
+      } catch (e) {
+        error("Failed to stop session: " + extractApiError(e));
       }
     },
   };
@@ -567,8 +566,8 @@ function confirmRestart(name: string) {
         await post(`/api/sessions/${name}/restart`);
         success(`Session ${name} restarting`);
         await loadSessions();
-      } catch {
-        error("Failed to restart session");
+      } catch (e) {
+        error("Failed to restart session: " + extractApiError(e));
       }
     },
   };
@@ -588,8 +587,8 @@ function confirmDelete(name: string) {
         success(`Session ${name} deleted`);
         selected.value.delete(name);
         await loadSessions();
-      } catch {
-        error("Failed to delete session");
+      } catch (e) {
+        error("Failed to delete session: " + extractApiError(e));
       }
     },
   };
@@ -614,13 +613,17 @@ async function bulkStart() {
     fn: async () => {
       confirmAction.value = null;
       let ok = 0;
+      let fail = 0;
       for (const name of names) {
         try {
           await post(`/api/sessions/${name}/start`);
           ok++;
-        } catch {}
+        } catch (e) {
+          fail++;
+        }
       }
       selected.value.clear();
+      if (fail > 0) error(`Failed to start ${fail} session(s)`);
       success(`Started ${ok} session(s)`);
       await loadSessions();
     },
@@ -637,13 +640,17 @@ async function bulkStop() {
     fn: async () => {
       confirmAction.value = null;
       let ok = 0;
+      let fail = 0;
       for (const name of names) {
         try {
           await post(`/api/sessions/${name}/stop`);
           ok++;
-        } catch {}
+        } catch (e) {
+          fail++;
+        }
       }
       selected.value.clear();
+      if (fail > 0) error(`Failed to stop ${fail} session(s)`);
       success(`Stopped ${ok} session(s)`);
       await loadSessions();
     },
@@ -660,13 +667,17 @@ async function bulkDelete() {
     fn: async () => {
       confirmAction.value = null;
       let ok = 0;
+      let fail = 0;
       for (const name of names) {
         try {
           await del(`/api/sessions/${name}`);
           ok++;
-        } catch {}
+        } catch (e) {
+          fail++;
+        }
       }
       selected.value.clear();
+      if (fail > 0) error(`Failed to delete ${fail} session(s)`);
       success(`Deleted ${ok} session(s)`);
       await loadSessions();
     },
@@ -685,12 +696,16 @@ async function startAllStopped() {
     fn: async () => {
       confirmAction.value = null;
       let ok = 0;
+      let fail = 0;
       for (const s of stopped) {
         try {
           await post(`/api/sessions/${s.name}/start`);
           ok++;
-        } catch {}
+        } catch (e) {
+          fail++;
+        }
       }
+      if (fail > 0) error(`Failed to start ${fail} session(s)`);
       success(`Started ${ok} session(s)`);
       await loadSessions();
     },
@@ -708,12 +723,16 @@ async function stopAllWorking() {
     fn: async () => {
       confirmAction.value = null;
       let ok = 0;
+      let fail = 0;
       for (const s of working) {
         try {
           await post(`/api/sessions/${s.name}/stop`);
           ok++;
-        } catch {}
+        } catch (e) {
+          fail++;
+        }
       }
+      if (fail > 0) error(`Failed to stop ${fail} session(s)`);
       success(`Stopped ${ok} session(s)`);
       await loadSessions();
     },
@@ -779,13 +798,32 @@ function closeModal() {
 // ---- Poll ----
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
+function startPolling() {
+  pollTimer = setInterval(loadSessions, 10000);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
 onMounted(async () => {
   await Promise.allSettled([loadSessions(), loadEngines()]);
-  pollTimer = setInterval(loadSessions, 10000);
+  startPolling();
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      stopPolling();
+    } else {
+      loadSessions();
+      startPolling();
+    }
+  });
 });
 
 onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer);
+  stopPolling();
 });
 </script>
 
