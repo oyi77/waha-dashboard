@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git checkout core 2>&1 && sudo docker build -t waha-plus:latest . 2>&1 | tail -5\",\"timeout\":600000,\"description\":\"Switch to core branch and rebuild\"}",
-  "error": "Exit code 1",
-  "timestamp": "2026-05-21T16:25:35.262Z",
-  "retry_count": 1
-}

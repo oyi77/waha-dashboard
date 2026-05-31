@@ -14,28 +14,36 @@
         <div class="page-title">◎ Sessions</div>
         <div class="page-subtitle">WhatsApp session management</div>
       </div>
-      <div
-        style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap"
-      >
-        <button class="btn-ghost" @click="loadSessions">⟳ Refresh</button>
-        <button
-          class="btn-secondary"
-          :disabled="stoppedCount === 0"
-          @click="startAllStopped"
-        >
-          ▶ Start All ({{ stoppedCount }})
-        </button>
-        <button
-          class="btn-ghost"
-          :disabled="workingCount === 0"
-          @click="stopAllWorking"
-        >
-          ⏹ Stop All ({{ workingCount }})
-        </button>
-        <button class="btn-primary" @click="showCreate = true">
-          + New Session
-        </button>
-      </div>
+       <div
+         style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap"
+       >
+         <button class="btn-ghost" @click="loadSessions">⟳ Refresh</button>
+         <button
+           class="btn-secondary"
+           :disabled="failedCount === 0"
+           @click="recoverAll"
+           title="Automatically recover and restart all failed sessions"
+         >
+           🔄 Recover Failed ({{ failedCount }})
+         </button>
+         <button
+           class="btn-secondary"
+           :disabled="stoppedCount === 0"
+           @click="startAllStopped"
+         >
+           ▶ Start All ({{ stoppedCount }})
+         </button>
+         <button
+           class="btn-ghost"
+           :disabled="workingCount === 0"
+           @click="stopAllWorking"
+         >
+           ⏹ Stop All ({{ workingCount }})
+         </button>
+         <button class="btn-primary" @click="showCreate = true">
+           + New Session
+         </button>
+       </div>
     </div>
 
     <!-- Stat Cards -->
@@ -525,8 +533,25 @@ async function loadSessions() {
   try {
     const data = await get<Session[]>("/api/sessions?all=true");
     sessions.value = data;
+    // ✅ Cache sessions locally for offline resilience
+    localStorage.setItem("waha_sessions_cache", JSON.stringify(data));
+    localStorage.setItem("waha_sessions_cache_time", new Date().toISOString());
   } catch (e) {
-    error("Failed to load sessions: " + extractApiError(e));
+    const errorMsg = extractApiError(e);
+    // ✅ Fall back to cached data if API fails
+    const cached = localStorage.getItem("waha_sessions_cache");
+    if (cached) {
+      try {
+        sessions.value = JSON.parse(cached);
+        const cacheTime = localStorage.getItem("waha_sessions_cache_time");
+        const age = cacheTime ? Math.round((Date.now() - new Date(cacheTime).getTime()) / 1000) : 0;
+        error(`Using cached data (${age}s old) - API offline`);
+      } catch {
+        error("Failed to load sessions: " + errorMsg);
+      }
+    } else {
+      error("Failed to load sessions: " + errorMsg);
+    }
   } finally {
     loading.value = false;
   }
@@ -876,11 +901,26 @@ function closeModal() {
   form.start = true;
 }
 
+// ---- Recovery ----
+async function recoverAll() {
+  try {
+    const result = await post<{ recovered: number; sessions: string[] }>(
+      "/api/health/sessions/recover-all",
+      {}
+    );
+    success(`✅ Recovered ${result.recovered} session(s)`);
+    await loadSessions();
+  } catch (e) {
+    error("Failed to recover sessions: " + extractApiError(e));
+  }
+}
+
 // ---- Poll ----
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 function startPolling() {
-  pollTimer = setInterval(loadSessions, 10000);
+  // ✅ IMPROVED: Poll every 3 seconds instead of 10 (3x faster feedback)
+  pollTimer = setInterval(loadSessions, 3000);
 }
 
 function stopPolling() {
@@ -891,6 +931,16 @@ function stopPolling() {
 }
 
 onMounted(async () => {
+  // ✅ Load cached sessions first (instant UI display)
+  const cached = localStorage.getItem("waha_sessions_cache");
+  if (cached) {
+    try {
+      sessions.value = JSON.parse(cached);
+    } catch {
+      // Ignore cache parse errors
+    }
+  }
+  
   await Promise.allSettled([loadSessions(), loadEngines()]);
   startPolling();
   document.addEventListener("visibilitychange", () => {
