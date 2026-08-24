@@ -5,44 +5,53 @@ Web-based management dashboard for [WAHA Core](https://github.com/oyi77/waha-cor
 ## Features
 
 - **Sessions** — Start, stop, restart, and manage WhatsApp sessions with bulk operations
+- **Realtime status** — WebSocket (`/ws`) session-status stream overlays live state; polling backs off 3s → 15s while connected
+- **Alert banner** — FAILED / SCAN_QR_CODE sessions surface app-wide, dismiss-per-alert-set
+- **Account Status modal** — per-session reachout timelock state and new-chat message capping (quota bar)
+- **Channels explorer** — list followed channels, discover by view/text/country/category, follow/mute/unfollow, message preview with view counts and reactions
 - **Workers** — Multi-worker orchestration for WAHA Plus
-- **Templates** — Message template management
-- **Auto-Reply** — Automated response rules
-- **Scheduling** — Scheduled message sending
-- **Contacts** — Contact management
+- **Templates / Auto-Reply / Scheduling / Contacts** — messaging automation management
 - **Analytics** — Message and session analytics
-- **Settings** — Configure session lifecycle, engines, and API credentials
-
-## Screenshots
-
-See the live dashboard at [waha.devlike.pro/dashboard](https://waha.devlike.pro/dashboard)
+- **Server resources** — disk-space health indicators from `GET /health`
+- **Themes** — dark (default) and light, persisted
+- **i18n** — full Indonesian/English coverage of all chrome, switchable in the topbar
+- **PWA** — installable as a standalone app
 
 ## Quick Start
 
 ```bash
 # Install dependencies
-yarn install
+npm install
 
 # Development
-yarn dev
+npm run dev
 
 # Production build
-yarn build
+npm run build
 
-# Preview production build
-yarn preview
+# Unit tests
+npm test
 ```
 
-## Configuration
+The dashboard connects to WAHA via the REST API using same-origin requests — it is served by WAHA itself under `/dashboard` (the production image builds this repo at the ref pinned in waha-core's `waha.config.json`).
 
-The dashboard connects to WAHA via the REST API. Configure the API URL via the `NUXT_PUBLIC_WAHA_API_URL` environment variable:
+## Architecture Notes
+
+- **Nuxt 3, static preset** (`ssr: false`) — prerendered SPA served by WAHA's ServeStaticModule under `/dashboard`
+- `composables/useWahaApi.ts` — shared fetch layer; resolves the API key from `/api/dashboard/config`
+- `composables/useWahaRealtime.ts` — singleton WebSocket with capped-backoff reconnect
+- `composables/useLocale.ts` — pure `translate()` core + lazy Nuxt state (unit-tested)
+- Dashboard auth is the WAHA cookie flow: `/dashboard/login.html` → `POST /api/dashboard/login` → `waha-auth` HMAC cookie
+
+## Testing & CI
 
 ```bash
-NUXT_PUBLIC_WAHA_API_URL=https://your-waha-server.com
+npm test        # vitest unit tests (useLocale dictionary parity, interpolation)
 ```
+
+`.github/workflows/ci.yml` runs tests + static build + route-presence checks on every push/PR.
 
 ## Related
 
 - **WAHA Core** — [oyi77/waha-core](https://github.com/oyi77/waha-core) — Backend REST API
 - **Documentation** — [waha.devlike.pro](https://waha.devlike.pro/)
-- **Swagger API Docs** — [waha.devlike.pro/swagger](https://waha.devlike.pro/swagger)
