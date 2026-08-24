@@ -170,13 +170,13 @@
         @keydown.escape="unfollowTarget = null"
       >
         <div class="modal-box" tabindex="-1">
-          <div class="modal-title">✕ Unfollow</div>
+          <div class="modal-title">{{ t("ch.unfollowTitle") }}</div>
           <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px">
-            Unfollow "{{ unfollowTarget.name }}"?
+            {{ t("ch.unfollowMsg") }} "{{ unfollowTarget.name }}"?
           </p>
           <div style="display: flex; gap: 10px">
             <button class="btn-ghost" style="flex: 1" @click="unfollowTarget = null">
-              Cancel
+              {{ t("action.cancel") }}
             </button>
             <button class="btn-danger" style="flex: 1" @click="doUnfollow">
               ✕ Unfollow

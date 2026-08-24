@@ -33,9 +33,9 @@
         rel="noopener noreferrer"
         class="btn-ghost"
         style="text-decoration: none"
-      >Open ↗</a>
+      >{{ t("action.open") }}</a>
       <button v-if="channel.invite" class="btn-secondary" @click="copyInvite">
-        {{ copied ? "✓ Copied" : "Copy invite" }}
+        {{ copied ? t("action.copied") : t("action.copyInvite") }}
       </button>
       <!-- Slot for parent-provided actions (follow/mute/unfollow) -->
       <slot name="actions" />
@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 interface Channel {
   id: string;
   name: string;

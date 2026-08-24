@@ -349,46 +349,46 @@
       @keydown.escape="statusTarget = ''"
     >
       <div class="modal-box" tabindex="-1">
-        <div class="modal-title">⚡ Account Status — {{ statusTarget }}</div>
+        <div class="modal-title">{{ t("acct.title") }} — {{ statusTarget }}</div>
         <div v-if="statusLoading" class="empty-state-text" style="padding: 24px 0">
           ⟳ Loading...
         </div>
         <template v-else>
           <div class="status-section">
-            <div class="status-section-title">Reachout Timelock</div>
+            <div class="status-section-title">{{ t("acct.timelock") }}</div>
             <div v-if="statusTimelock" class="status-rows">
               <div class="status-row">
-                <span>Restriction</span>
+                <span>{{ t("acct.restriction") }}</span>
                 <span
                   class="badge"
                   :class="statusTimelock.isActive ? 'badge-failed' : 'badge-working'"
                 >
-                  {{ statusTimelock.isActive ? "ACTIVE — messaging new chats limited" : "None (clear)" }}
+                  {{ statusTimelock.isActive ? t("acct.active") : t("acct.clear") }}
                 </span>
               </div>
               <div class="status-row">
-                <span>Type</span>
+                <span>{{ t("acct.type") }}</span>
                 <code>{{ statusTimelock.enforcementType }}</code>
               </div>
               <div v-if="statusTimelock.timeEnforcementEnds" class="status-row">
-                <span>Ends at</span>
+                <span>{{ t("acct.endsAt") }}</span>
                 <code>{{ formatTime(statusTimelock.timeEnforcementEnds) }}</code>
               </div>
             </div>
-            <div v-else class="status-empty">No timelock data reported.</div>
+            <div v-else class="status-empty">{{ t("acct.none") }}</div>
           </div>
           <div class="status-section">
-            <div class="status-section-title">New-Chat Message Quota</div>
+            <div class="status-section-title">{{ t("acct.quota") }}</div>
             <div v-if="statusCapping && statusCapping.cappingStatus !== 'NONE'" class="status-rows">
               <div class="status-row">
-                <span>Status</span>
+                <span>{{ t("acct.quotaStatus") }}</span>
                 <span
                   class="badge"
                   :class="cappingBadgeClass(statusCapping.cappingStatus)"
                 >{{ statusCapping.cappingStatus }}</span>
               </div>
               <div class="status-row">
-                <span>Usage</span>
+                <span>{{ t("acct.usage") }}</span>
                 <code>{{ statusCapping.usedQuota }} / {{ statusCapping.totalQuota }}</code>
               </div>
               <div class="quota-bar-wrap">
@@ -402,11 +402,11 @@
                 <span class="quota-pct">{{ quotaPercent }}%</span>
               </div>
               <div class="status-row">
-                <span>Cycle ends</span>
+                <span>{{ t("acct.cycleEnds") }}</span>
                 <code>{{ formatTime(statusCapping.cycleEnd) }}</code>
               </div>
             </div>
-            <div v-else class="status-empty">Account is not subject to message capping.</div>
+            <div v-else class="status-empty">{{ t("acct.noCapping") }}</div>
           </div>
         </template>
         <button
