@@ -84,14 +84,14 @@
           @click="filterStatus = tab.value"
         >
           <span class="filter-tab-dot" :class="`dot-${tab.value.toLowerCase().replace('_', '-')}`" />
-          {{ tab.label }}
+          {{ t(tab.key) }}
           <span class="filter-count">{{ tabCount(tab.value) }}</span>
         </button>
       </div>
       <input
         v-model="searchQuery"
         class="filter-search"
-        placeholder="Search sessions..."
+        :placeholder="t('filter.searchPlaceholder')"
         type="search"
       />
     </div>
@@ -99,9 +99,9 @@
     <!-- Bulk Action Bar -->
     <div v-if="selected.size > 0" class="bulk-bar">
       <span class="bulk-label">{{ selected.size }} selected</span>
-      <button class="btn-secondary" @click="bulkStart">▶ Start</button>
-      <button class="btn-ghost" @click="bulkStop">⏹ Stop</button>
-      <button class="btn-danger" @click="bulkDelete">✕ Delete</button>
+      <button class="btn-secondary" @click="bulkStart">{{ t("action.start") }}</button>
+      <button class="btn-ghost" @click="bulkStop">{{ t("action.stop") }}</button>
+      <button class="btn-danger" @click="bulkDelete">{{ t("action.delete") }}</button>
       <button
         class="btn-ghost"
         style="margin-left: auto"
@@ -191,7 +191,7 @@
             aria-label="Restart session"
             @click="confirmStart(session.name)"
           >
-            ↻ Restart
+            {{ t("action.restart") }}
           </button>
           <button
             v-if="session.status === 'STOPPED'"
@@ -200,7 +200,7 @@
             aria-label="Start session"
             @click="confirmStart(session.name)"
           >
-            ▶ Start
+            {{ t("action.start") }}
           </button>
           <button
             v-if="session.status === 'WORKING'"
@@ -209,7 +209,7 @@
             aria-label="Restart session"
             @click="confirmRestart(session.name)"
           >
-            ↻ Restart
+            {{ t("action.restart") }}
           </button>
           <button
             v-if="session.status === 'WORKING'"
@@ -218,7 +218,7 @@
             aria-label="Account status"
             @click="openAccountStatus(session.name)"
           >
-            ⚡ Status
+            {{ t("action.accountStatus") }}
           </button>
           <button
             v-if="session.status === 'SCAN_QR_CODE'"
@@ -227,7 +227,7 @@
             aria-label="Scan QR Code"
             @click="openQr(session.name)"
           >
-            ⊡ Scan QR
+            {{ t("action.scanQr") }}
           </button>
           <button
             class="action-btn action-settings"
@@ -235,7 +235,7 @@
             aria-label="Session settings"
             @click="editSession(session)"
           >
-            ⚙ Settings
+            {{ t("action.settings") }}
           </button>
           <button
             class="action-btn action-delete"
@@ -243,7 +243,7 @@
             aria-label="Delete session"
             @click="confirmDelete(session.name)"
           >
-            ✕ Delete
+            {{ t("action.delete") }}
           </button>
         </div>
       </div>
@@ -518,13 +518,13 @@ const form = reactive({
 });
 
 const statusTabs = [
-  { label: "All", value: "ALL" },
-  { label: "Working", value: "WORKING" },
-  { label: "Starting", value: "STARTING" },
-  { label: "Stopped", value: "STOPPED" },
-  { label: "Scan QR", value: "SCAN_QR_CODE" },
-  { label: "Failed", value: "FAILED" },
-];
+  { key: "filter.all", value: "ALL" },
+  { key: "filter.working", value: "WORKING" },
+  { key: "filter.starting", value: "STARTING" },
+  { key: "filter.stopped", value: "STOPPED" },
+  { key: "filter.scanQrCode", value: "SCAN_QR_CODE" },
+  { key: "filter.failed", value: "FAILED" },
+] as const;
 
 const stoppedCount = computed(
   () => sessions.value.filter((s) => s.status === "STOPPED").length,
@@ -554,16 +554,17 @@ const emptyIcon = computed(() => {
 
 const emptyText = computed(() => {
   if (sessions.value.length === 0) {
-    return "No sessions yet. Create one to get started.";
+    return t("empty.noSessions");
   }
   const map: Record<string, string> = {
-    ALL: "No sessions match your filter.",
-    WORKING: "No working sessions right now.",
-    STOPPED: "No stopped sessions.",
-    SCAN_QR_CODE: "No sessions waiting for QR scan.",
-    FAILED: "No failed sessions. All clear!",
+    ALL: t("empty.noMatch"),
+    WORKING: t("empty.noWorking"),
+    STARTING: t("empty.noStarting"),
+    STOPPED: t("empty.noStopped"),
+    SCAN_QR_CODE: t("empty.noQr"),
+    FAILED: t("empty.allClear"),
   };
-  return map[filterStatus.value] ?? "No sessions match your filter.";
+  return map[filterStatus.value] ?? t("empty.noMatch");
 });
 
 const allTags = computed(() => {
@@ -728,9 +729,9 @@ async function saveEdit() {
 // ---- Start / Stop ----
 function confirmStart(name: string) {
   confirmAction.value = {
-    title: "Start Session",
-    message: `Start session "${name}"?`,
-    label: "Start",
+    title: t("confirm.startSession.title"),
+    message: t("confirm.startSession.message", { name: name }),
+    label: t("confirm.startSession.label"),
     danger: false,
     fn: async () => {
       confirmAction.value = null;
@@ -747,9 +748,9 @@ function confirmStart(name: string) {
 
 function confirmStop(name: string) {
   confirmAction.value = {
-    title: "Stop Session",
-    message: `Stop session "${name}"?`,
-    label: "Stop",
+    title: t("confirm.stopSession.title"),
+    message: t("confirm.stopSession.message", { name: name }),
+    label: t("confirm.stopSession.label"),
     danger: true,
     fn: async () => {
       confirmAction.value = null;
@@ -767,9 +768,9 @@ function confirmStop(name: string) {
 // ---- Restart ----
 function confirmRestart(name: string) {
   confirmAction.value = {
-    title: "Restart Session",
-    message: `Restart session "${name}"? This will stop and start it again.`,
-    label: "Restart",
+    title: t("confirm.restartSession.title"),
+    message: t("confirm.restartSession.message", { name: name }),
+    label: t("confirm.restartSession.label"),
     danger: false,
     fn: async () => {
       confirmAction.value = null;
@@ -787,9 +788,9 @@ function confirmRestart(name: string) {
 // ---- Delete ----
 function confirmDelete(name: string) {
   confirmAction.value = {
-    title: "Delete Session",
-    message: `Permanently delete session "${name}"? This cannot be undone.`,
-    label: "Delete",
+    title: t("confirm.deleteSession.title"),
+    message: t("confirm.deleteSession.message", { name: name }),
+    label: t("confirm.deleteSession.label"),
     danger: true,
     fn: async () => {
       confirmAction.value = null;
@@ -817,9 +818,9 @@ function toggleSelect(name: string) {
 async function bulkStart() {
   const names = Array.from(selected.value);
   confirmAction.value = {
-    title: "Start Sessions",
-    message: `Start ${names.length} session(s)?`,
-    label: "Start",
+    title: t("confirm.bulkStart.title"),
+    message: t("confirm.bulkStart.message", { n: names.length }),
+    label: t("confirm.bulkStart.label"),
     danger: false,
     fn: async () => {
       confirmAction.value = null;
@@ -844,9 +845,9 @@ async function bulkStart() {
 async function bulkStop() {
   const names = Array.from(selected.value);
   confirmAction.value = {
-    title: "Stop Sessions",
-    message: `Stop ${names.length} session(s)?`,
-    label: "Stop",
+    title: t("confirm.bulkStop.title"),
+    message: t("confirm.bulkStop.message", { n: names.length }),
+    label: t("confirm.bulkStop.label"),
     danger: true,
     fn: async () => {
       confirmAction.value = null;
@@ -871,9 +872,9 @@ async function bulkStop() {
 async function bulkDelete() {
   const names = Array.from(selected.value);
   confirmAction.value = {
-    title: "Delete Sessions",
-    message: `Delete ${names.length} session(s)? This cannot be undone.`,
-    label: "Delete",
+    title: t("confirm.bulkDelete.title"),
+    message: t("confirm.bulkDelete.message", { n: names.length }),
+    label: t("confirm.bulkDelete.label"),
     danger: true,
     fn: async () => {
       confirmAction.value = null;
@@ -900,9 +901,9 @@ async function startAllStopped() {
   const stopped = sessions.value.filter((s) => s.status === "STOPPED");
   if (stopped.length === 0) return;
   confirmAction.value = {
-    title: "Start All Stopped",
-    message: `Start all ${stopped.length} stopped session(s)?`,
-    label: "Start All",
+    title: t("confirm.startAllStopped.title"),
+    message: t("confirm.startAllStopped.message", { n: stopped.length }),
+    label: t("confirm.startAllStopped.label"),
     danger: false,
     fn: async () => {
       confirmAction.value = null;
@@ -927,9 +928,9 @@ async function stopAllWorking() {
   const working = sessions.value.filter((s) => s.status === "WORKING");
   if (working.length === 0) return;
   confirmAction.value = {
-    title: "Stop All Working",
-    message: `Stop all ${working.length} working session(s)?`,
-    label: "Stop All",
+    title: t("confirm.stopAllWorking.title"),
+    message: t("confirm.stopAllWorking.message", { n: working.length }),
+    label: t("confirm.stopAllWorking.label"),
     danger: true,
     fn: async () => {
       confirmAction.value = null;

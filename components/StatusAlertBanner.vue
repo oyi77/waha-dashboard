@@ -9,7 +9,7 @@
     <span class="alert-text">
       {{ text }}
       <button class="alert-link" @click="$emit('jump')">
-        Lihat Sessions →
+        {{ t("banner.viewSessions") }}
       </button>
     </span>
     <button class="alert-dismiss" aria-label="Dismiss" @click="dismiss">
@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
 const { alerts, ensureConnected } = useWahaRealtime();
+const { t } = useLocale();
 
 const dismissed = ref(false);
 const dismissedSignature = ref("");
@@ -52,10 +53,14 @@ const icon = computed(() => (failed.value.length > 0 ? "⊘" : "⊡"));
 const text = computed(() => {
   const parts: string[] = [];
   if (failed.value.length > 0) {
-    parts.push(`${failed.value.length} sesi gagal: ${failed.value.map((f) => f.session).join(", ")}`);
+    parts.push(
+      `${t("alert.failedSessions", { n: failed.value.length })}: ${failed.value.map((f) => f.session).join(", ")}`,
+    );
   }
   if (qr.value.length > 0) {
-    parts.push(`${qr.value.length} sesi menunggu scan QR: ${qr.value.map((f) => f.session).join(", ")}`);
+    parts.push(
+      `${t("alert.qrSessions", { n: qr.value.length })}: ${qr.value.map((f) => f.session).join(", ")}`,
+    );
   }
   return parts.join(" · ");
 });

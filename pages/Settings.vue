@@ -12,7 +12,7 @@
       <div class="settings-section card">
         <div class="section-title">
           <span class="section-icon">💚</span>
-          Session Health
+          {{ t("settings.sessionHealth") }}
         </div>
         <div v-if="healthLoading" class="health-loading">
           Loading health data...
@@ -57,7 +57,7 @@
       <div class="settings-section card">
         <div class="section-title">
           <span class="section-icon">💾</span>
-          Server Resources
+          {{ t("settings.serverResources") }}
         </div>
         <div v-if="serverHealthLoading" class="health-loading">
           Loading server health...
@@ -103,7 +103,7 @@
       <div class="settings-section card">
         <div class="section-title">
           <span class="section-icon">🔄</span>
-          Session Lifecycle
+          {{ t("settings.sessionLifecycle") }}
         </div>
         <div class="settings-list">
           <div class="settings-row">
@@ -196,7 +196,7 @@
       <div class="settings-section card">
         <div class="section-title">
           <span class="section-icon">🔒</span>
-          Dashboard Security
+          {{ t("settings.dashboardSecurity") }}
         </div>
         <div class="settings-list">
           <div class="settings-row">
@@ -229,7 +229,7 @@
       <div class="settings-section card">
         <div class="section-title">
           <span class="section-icon">🔑</span>
-          API Configuration
+          {{ t("settings.apiConfig") }}
         </div>
         <div class="settings-list">
           <div class="settings-row">
@@ -252,7 +252,7 @@
       <div class="settings-section card">
         <div class="section-title">
           <span class="section-icon">⚙</span>
-          Workers
+          {{ t("settings.workers") }}
         </div>
         <div class="settings-list">
           <div class="settings-row">
@@ -276,7 +276,7 @@
       <div class="settings-section card">
         <div class="section-title">
           <span class="section-icon">ℹ</span>
-          About
+          {{ t("settings.about") }}
         </div>
         <div class="settings-list">
           <div class="settings-row">
@@ -397,6 +397,7 @@ interface SessionHealthSummary {
 }
 
 const { get, put } = useWahaApi();
+const { t } = useLocale();
 const { success, error } = useToast();
 
 const engines = ref<string[]>([]);

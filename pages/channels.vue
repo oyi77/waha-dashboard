@@ -58,7 +58,7 @@
               </button>
               <button
                 class="btn-danger"
-                @click.stop="confirmUnfollow(ch, false)"
+                @click.stop="confirmUnfollow(ch)"
               >
                 ✕ Unfollow
               </button>
@@ -161,6 +161,29 @@
           <div class="empty-state-text">No channels found for this search.</div>
         </div>
       </template>
+
+      <!-- Unfollow Confirm Modal -->
+      <div
+        v-if="unfollowTarget"
+        class="modal-overlay"
+        @click.self="unfollowTarget = null"
+        @keydown.escape="unfollowTarget = null"
+      >
+        <div class="modal-box" tabindex="-1">
+          <div class="modal-title">✕ Unfollow</div>
+          <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px">
+            Unfollow "{{ unfollowTarget.name }}"?
+          </p>
+          <div style="display: flex; gap: 10px">
+            <button class="btn-ghost" style="flex: 1" @click="unfollowTarget = null">
+              Cancel
+            </button>
+            <button class="btn-danger" style="flex: 1" @click="doUnfollow">
+              ✕ Unfollow
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Channel Preview Modal -->
       <div
@@ -436,8 +459,16 @@ async function followChannel(ch: Channel) {
   }
 }
 
-async function confirmUnfollow(ch: Channel) {
-  if (!confirm(`Unfollow "${ch.name}"?`)) return;
+const unfollowTarget = ref<Channel | null>(null);
+
+function confirmUnfollow(ch: Channel) {
+  unfollowTarget.value = ch;
+}
+
+async function doUnfollow() {
+  const ch = unfollowTarget.value;
+  if (!ch) return;
+  unfollowTarget.value = null;
   try {
     await del(`/api/${sessionName.value}/channels/${encodeURIComponent(ch.id)}`);
     channels.value = channels.value.filter((c) => c.id !== ch.id);
