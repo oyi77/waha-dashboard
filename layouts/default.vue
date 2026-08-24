@@ -7,64 +7,67 @@
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-label">Overview</div>
+        <div class="nav-section-label">{{ t("nav.overview") }}</div>
         <NuxtLink to="/" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⊞</span> Dashboard
+          <span class="nav-icon">⊞</span> {{ t("nav.dashboard") }}
         </NuxtLink>
         <NuxtLink to="/event-monitor" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◉</span> Event Monitor
+          <span class="nav-icon">◉</span> {{ t("nav.eventMonitor") }}
         </NuxtLink>
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-label">Sessions</div>
+        <div class="nav-section-label">{{ t("nav.sessions") }}</div>
         <NuxtLink to="/Sessions" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◎</span> Sessions
+          <span class="nav-icon">◎</span> {{ t("nav.sessionsItem") }}
         </NuxtLink>
         <NuxtLink to="/Workers" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⛭</span> Workers
+          <span class="nav-icon">⛭</span> {{ t("nav.workers") }}
         </NuxtLink>
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-label">Messaging</div>
+        <div class="nav-section-label">{{ t("nav.messaging") }}</div>
         <NuxtLink to="/plus/templates" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">▣</span> Templates
+          <span class="nav-icon">▣</span> {{ t("nav.templates") }}
         </NuxtLink>
         <NuxtLink to="/plus/autoreply" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">↩</span> Auto-Reply
+          <span class="nav-icon">↩</span> {{ t("nav.autoReply") }}
         </NuxtLink>
         <NuxtLink to="/plus/schedule" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◷</span> Scheduling
+          <span class="nav-icon">◷</span> {{ t("nav.scheduling") }}
         </NuxtLink>
         <NuxtLink to="/plus/contacts" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◑</span> Contacts
+          <span class="nav-icon">◑</span> {{ t("nav.contacts") }}
+        </NuxtLink>
+        <NuxtLink to="/channels" class="nav-item" @click="closeSidebar">
+          <span class="nav-icon">📢</span> {{ t("nav.channels") }}
         </NuxtLink>
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-label">Analytics</div>
+        <div class="nav-section-label">{{ t("nav.analytics") }}</div>
         <NuxtLink to="/plus/analytics" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">▲</span> Analytics
+          <span class="nav-icon">▲</span> {{ t("nav.analyticsItem") }}
         </NuxtLink>
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-label">Settings</div>
+        <div class="nav-section-label">{{ t("nav.settings") }}</div>
         <NuxtLink to="/Settings" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⚙</span> Settings
+          <span class="nav-icon">⚙</span> {{ t("nav.settingsItem") }}
         </NuxtLink>
         <NuxtLink to="/plus/apikeys" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⚿</span> API Keys
+          <span class="nav-icon">⚿</span> {{ t("nav.apiKeys") }}
         </NuxtLink>
         <NuxtLink to="/plus/engines" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">◈</span> Engines
+          <span class="nav-icon">◈</span> {{ t("nav.engines") }}
         </NuxtLink>
         <NuxtLink to="/plus/mcp" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">⬡</span> MCP Server
+          <span class="nav-icon">⬡</span> {{ t("nav.mcp") }}
         </NuxtLink>
         <NuxtLink to="/plus/skills" class="nav-item" @click="closeSidebar">
-          <span class="nav-icon">✧</span> Claude Skills
+          <span class="nav-icon">✧</span> {{ t("nav.skills") }}
         </NuxtLink>
       </div>
     </nav>
@@ -84,13 +87,20 @@
         >
           {{ isDark ? "☀" : "☾" }}
         </button>
+        <button
+          class="topbar-link theme-toggle"
+          :title="locale === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'"
+          @click="toggleLocale"
+        >
+          {{ locale === "id" ? "EN" : "ID" }}
+        </button>
         <a
           href="https://waha.devlike.pro/docs"
           target="_blank"
           rel="noopener"
           class="topbar-link"
           aria-label="WAHA documentation (opens in new tab)"
-          >Docs ↗</a
+          >{{ t("topbar.docs") }}</a
         >
       </header>
 
@@ -108,7 +118,7 @@
 
 <script setup lang="ts">
 const route = useRoute();
-const sidebarOpen = ref(false);
+const { t, locale, toggleLocale } = useLocale();
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -118,6 +128,7 @@ const pageTitles: Record<string, string> = {
   "/plus": "Plus Dashboard",
   "/plus/sessions": "Session Manager",
   "/Settings": "Settings",
+  "/channels": "Channels",
   "/plus/analytics": "Analytics",
   "/plus/schedule": "Scheduling",
   "/plus/templates": "Templates",
@@ -163,6 +174,11 @@ onMounted(() => {
     isDark.value = saved === "dark";
   }
   applyTheme();
+  const { setLocale } = useLocale();
+  const savedLocale = localStorage.getItem("waha_locale");
+  if (savedLocale === "id" || savedLocale === "en") {
+    setLocale(savedLocale);
+  }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && sidebarOpen.value) sidebarOpen.value = false;
   });
