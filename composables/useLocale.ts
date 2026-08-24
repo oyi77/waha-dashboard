@@ -2,7 +2,7 @@
 // banners). Pages keep their English copy unless a key is wired up — this is
 // deliberately not a full i18n framework, just consistent chrome translation.
 
-const messages = {
+export const messages = {
   id: {
     "nav.overview": "Ringkasan",
     "nav.sessions": "Sesi",
@@ -462,17 +462,39 @@ const messages = {
 export type Locale = "id" | "en";
 export type MessageKey = keyof typeof messages.id;
 
-const locale = useState<Locale>("waha_locale", () => "en");
+// Pure translation core — kept separate from Nuxt state so it is
+// unit-testable outside a component context.
+export function translate(
+  key: string,
+  locale: Locale,
+  params?: Record<string, string | number>,
+): string {
+  let out: string =
+    (messages[locale] as Record<string, string>)[key] ??
+    (messages.en as Record<string, string>)[key] ??
+    key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      out = out.replace(`{${k}}`, String(v));
+    }
+  }
+  return out;
+}
+
+// Lazy Nuxt state — must not run at module import time so the pure
+// translate() stays testable outside a Nuxt context.
+let _localeRef: ReturnType<typeof useState<Locale>> | null = null;
 
 export function useLocale() {
-  function t(key: MessageKey, params?: Record<string, string | number>): string {
-    let out: string = messages[locale.value][key] ?? messages.en[key] ?? key;
-    if (params) {
-      for (const [k, v] of Object.entries(params)) {
-        out = out.replace(`{${k}}`, String(v));
-      }
-    }
-    return out;
+  if (!_localeRef) {
+    _localeRef = useState<Locale>("waha_locale", () => "en");
+  }
+  const locale = _localeRef;
+  function t(
+    key: MessageKey,
+    params?: Record<string, string | number>,
+  ): string {
+    return translate(key, locale.value, params);
   }
 
   function setLocale(next: Locale) {
