@@ -115,6 +115,5 @@ export function useLocale() {
   function toggleLocale() {
     setLocale(locale.value === "id" ? "en" : "id");
   }
-
-  return { locale, t, toggleLocale };
+  return { locale, t, setLocale, toggleLocale };
 }
