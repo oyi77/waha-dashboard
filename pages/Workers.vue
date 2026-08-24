@@ -2,34 +2,34 @@
   <div class="page-wrapper">
     <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px">
       <div>
-        <div class="page-title">⛭ Workers</div>
-        <div class="page-subtitle">WAHA worker process management</div>
+        <div class="page-title">{{ t("workers.title") }}</div>
+        <div class="page-subtitle">{{ t("workers.subtitle") }}</div>
       </div>
-      <button class="btn-ghost" @click="load">⟳ Refresh</button>
+      <button class="btn-ghost" @click="load">{{ t("action.refresh") }}</button>
     </div>
 
     <div v-if="loading" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading workers…</div>
+      <div class="empty-state-text">{{ t("workers.loading") }}</div>
     </div>
 
     <template v-else>
       <!-- Stat cards -->
       <div class="grid-4 stagger" style="margin-bottom: 24px">
         <div class="stat-card card">
-          <div class="stat-label">Total Sessions</div>
+          <div class="stat-label">{{ t("workers.totalSessions") }}</div>
           <div class="stat-value">{{ sessions.length }}</div>
         </div>
         <div class="stat-card card">
-          <div class="stat-label">Working</div>
+          <div class="stat-label">{{ t("stat.working") }}</div>
           <div class="stat-value stat-working">{{ workingCount }}</div>
         </div>
         <div class="stat-card card">
-          <div class="stat-label">Failed</div>
+          <div class="stat-label">{{ t("stat.failed") }}</div>
           <div class="stat-value stat-failed">{{ failedCount }}</div>
         </div>
         <div class="stat-card card">
-          <div class="stat-label">Stopped</div>
+          <div class="stat-label">{{ t("stat.stopped") }}</div>
           <div class="stat-value stat-stopped">{{ stoppedCount }}</div>
         </div>
       </div>
@@ -164,6 +164,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 
 interface SessionMe {
   id: string;

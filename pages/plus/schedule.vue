@@ -11,10 +11,8 @@
       "
     >
       <div>
-        <div class="page-title">◷ Scheduling</div>
-        <div class="page-subtitle">
-          Schedule messages to send at a specific time
-        </div>
+        <div class="page-title">{{ t("plus.schedule.title") }}</div>
+        <div class="page-subtitle">{{ t("plus.schedule.subtitle") }}</div>
       </div>
       <button class="btn-ghost" @click="loadScheduled">⟳ Refresh</button>
     </div>
@@ -124,6 +122,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 interface Scheduled {
   id: string;
   session: string;

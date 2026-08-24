@@ -1,8 +1,8 @@
 <template>
   <div class="page-wrapper">
     <div class="page-header">
-      <div class="page-title">✦ Plus Hub</div>
-      <div class="page-subtitle">WAHA Plus — advanced features overview</div>
+      <div class="page-title">{{ t("plus.index.title") }}</div>
+      <div class="page-subtitle">{{ t("plus.index.subtitle") }}</div>
     </div>
 
     <div v-if="statsError" class="empty-state">
@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 const { get } = useWahaApi();
 
 const stats = reactive({ scheduled: 0, templates: 0, rules: 0 });

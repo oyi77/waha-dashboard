@@ -1,10 +1,8 @@
 <template>
   <div class="page-wrapper">
     <div class="page-header">
-      <div class="page-title">⬡ MCP Server</div>
-      <div class="page-subtitle">
-        Use WAHA as an MCP server for Claude AI agents
-      </div>
+      <div class="page-title">{{ t("plus.mcp.title") }}</div>
+      <div class="page-subtitle">{{ t("plus.mcp.subtitle") }}</div>
     </div>
 
     <div class="card" style="margin-bottom: 24px">
@@ -154,6 +152,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 interface McpTool {
   name: string;
   desc: string;

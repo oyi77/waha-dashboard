@@ -11,8 +11,8 @@
       "
     >
       <div>
-        <div class="page-title">▣ Templates</div>
-        <div class="page-subtitle">Reusable message templates</div>
+        <div class="page-title">{{ t("plus.templates.title") }}</div>
+        <div class="page-subtitle">{{ t("plus.templates.subtitle") }}</div>
       </div>
       <button class="btn-primary" @click="showCreate = true">
         + New Template
@@ -180,6 +180,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 interface Template {
   id: string;
   name: string;

@@ -2,8 +2,8 @@
   <div class="page-wrapper">
     <div class="page-header">
       <div>
-        <div class="page-title">⚿ API Keys</div>
-        <div class="page-subtitle">Manage API keys for WAHA access</div>
+        <div class="page-title">{{ t("plus.apikeys.title") }}</div>
+        <div class="page-subtitle">{{ t("plus.apikeys.subtitle") }}</div>
       </div>
       <button class="btn-primary" @click="showCreate = true">+ New Key</button>
     </div>
@@ -148,6 +148,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 
 
 interface ApiKey {

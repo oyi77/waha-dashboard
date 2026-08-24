@@ -1,10 +1,8 @@
 <template>
   <div class="page-wrapper">
     <div class="page-header">
-      <div class="page-title">🧠 Claude Skills</div>
-      <div class="page-subtitle">
-        Ready-to-use Claude Code skill definitions for WhatsApp automation
-      </div>
+      <div class="page-title">{{ t("plus.skills.title") }}</div>
+      <div class="page-subtitle">{{ t("plus.skills.subtitle") }}</div>
     </div>
 
     <!-- Skill: waha-send -->
@@ -293,6 +291,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 const { init, apiKey } = useWahaApi();
 const { error } = useToast();
 const origin = computed(() =>

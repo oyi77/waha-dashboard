@@ -11,8 +11,8 @@
       "
     >
       <div>
-        <div class="page-title">↩ Auto-Reply</div>
-        <div class="page-subtitle">Keyword-based automatic reply rules</div>
+        <div class="page-title">{{ t("plus.autoreply.title") }}</div>
+        <div class="page-subtitle">{{ t("plus.autoreply.subtitle") }}</div>
       </div>
     </div>
 
@@ -127,6 +127,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 interface AutoReplyRule {
   id: string;
   keyword: string;

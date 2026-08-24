@@ -11,8 +11,8 @@
       "
     >
       <div>
-        <div class="page-title">◉ Event Monitor</div>
-        <div class="page-subtitle">Live webhook event stream</div>
+        <div class="page-title">{{ t("em.title") }}</div>
+        <div class="page-subtitle">{{ t("em.subtitle") }}</div>
       </div>
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
         <span
@@ -72,6 +72,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 
 
 interface EventItem {

@@ -2,18 +2,18 @@
   <div class="page-wrapper">
     <div class="page-header">
       <div>
-        <div class="page-title">📢 Channels</div>
-        <div class="page-subtitle">Explore and manage WhatsApp channels</div>
+        <div class="page-title">{{ t("ch.title") }}</div>
+        <div class="page-subtitle">{{ t("ch.subtitle") }}</div>
       </div>
       <select v-model="sessionName" class="session-select" aria-label="Session">
-        <option value="" disabled>— session —</option>
+        <option value="" disabled>{{ t("ch.pickSession") }}</option>
         <option v-for="s in workingSessions" :key="s" :value="s">{{ s }}</option>
       </select>
     </div>
 
     <div v-if="!sessionName" class="empty-state">
       <div class="empty-state-icon">📢</div>
-      <div class="empty-state-text">Select a WORKING session to browse channels.</div>
+      <div class="empty-state-text">{{ t("ch.needWorking") }}</div>
     </div>
 
     <template v-else>
@@ -26,7 +26,7 @@
             :class="{ active: tabValue === tab.value }"
             @click="switchTab(tab.value)"
           >
-            {{ tab.label }}
+            {{ t(tab.key) }}
           </button>
         </div>
       </div>
@@ -35,11 +35,11 @@
       <template v-if="tabValue === 'mine'">
         <div v-if="loading" class="empty-state">
           <div class="empty-state-icon">⟳</div>
-          <div class="empty-state-text">Loading channels...</div>
+          <div class="empty-state-text">{{ t("ch.loading") }}</div>
         </div>
         <div v-else-if="channels.length === 0" class="empty-state">
           <div class="empty-state-icon">📭</div>
-          <div class="empty-state-text">This session follows no channels.</div>
+          <div class="empty-state-text">{{ t("ch.noneFollowed") }}</div>
         </div>
         <div v-else class="channels-grid stagger">
           <ChannelCard
@@ -76,21 +76,21 @@
               :class="{ active: mode === 'view' }"
               @click="mode = 'view'"
             >
-              By View
+              {{ t("ch.byView") }}
             </button>
             <button
               class="filter-tab"
               :class="{ active: mode === 'text' }"
               @click="mode = 'text'"
             >
-              By Text
+              {{ t("ch.byText") }}
             </button>
           </div>
 
           <div v-if="mode === 'text'" class="discover-row">
             <input
               v-model="searchText"
-              placeholder="Search channels by keyword..."
+              :placeholder="t('ch.searchPlaceholder')"
               type="search"
               @keydown.enter="runSearch"
             />
@@ -123,7 +123,7 @@
               :disabled="searching || !searchReady"
               @click="runSearch"
             >
-              {{ searching ? "⟳ Searching..." : "🔎 Search" }}
+              {{ searching ? t("ch.searching") : t("ch.search") }}
             </button>
           </div>
         </div>
@@ -149,7 +149,7 @@
 
         <div v-if="hasMore" style="display: flex; justify-content: center; margin: 20px 0">
           <button class="btn-secondary" :disabled="searching" @click="loadMore">
-            Load more
+            {{ t("ch.loadMore") }}
           </button>
         </div>
 
@@ -158,7 +158,7 @@
           class="empty-state"
         >
           <div class="empty-state-icon">🔍</div>
-          <div class="empty-state-text">No channels found for this search.</div>
+          <div class="empty-state-text">{{ t("ch.noResults") }}</div>
         </div>
       </template>
 
@@ -251,12 +251,13 @@ interface CountryItem {
 }
 
 const { get, post, del } = useWahaApi();
+const { t } = useLocale();
 const { error } = useToast();
 
 const tabs = [
-  { label: "My Channels", value: "mine" },
-  { label: "Discover", value: "discover" },
-];
+  { key: "ch.tabMine", value: "mine" },
+  { key: "ch.tabDiscover", value: "discover" },
+] as const;
 const tabValue = ref("mine");
 const mode = ref<"view" | "text">("view");
 

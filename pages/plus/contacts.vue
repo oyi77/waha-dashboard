@@ -1,10 +1,8 @@
 <template>
   <div class="page-wrapper">
     <div class="page-header">
-      <div class="page-title">◑ Contacts</div>
-      <div class="page-subtitle">
-        Bulk check and import WhatsApp contacts from CSV
-      </div>
+      <div class="page-title">{{ t("plus.contacts.title") }}</div>
+      <div class="page-subtitle">{{ t("plus.contacts.subtitle") }}</div>
     </div>
 
     <div class="layout-grid">
@@ -136,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 interface ContactResult {
   number: string;
   id?: string;

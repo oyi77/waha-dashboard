@@ -1,8 +1,8 @@
 <template>
   <div class="page-wrapper">
     <div class="page-header">
-      <div class="page-title">▲ Analytics</div>
-      <div class="page-subtitle">Message statistics and session activity</div>
+      <div class="page-title">{{ t("plus.analytics.title") }}</div>
+      <div class="page-subtitle">{{ t("plus.analytics.subtitle") }}</div>
     </div>
 
     <div class="filter-bar">
@@ -195,6 +195,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 interface DailyData {
   date: string;
   sent: number;

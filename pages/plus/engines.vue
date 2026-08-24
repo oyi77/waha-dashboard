@@ -5,10 +5,8 @@
       style="display: flex; align-items: center; justify-content: space-between"
     >
       <div>
-        <div class="page-title">◈ Engines</div>
-        <div class="page-subtitle">
-          Compare and choose the right WhatsApp engine
-        </div>
+        <div class="page-title">{{ t("plus.engines.title") }}</div>
+        <div class="page-subtitle">{{ t("plus.engines.subtitle") }}</div>
       </div>
       <div>
         <button class="btn-ghost" @click="loadSessions">⟳ Refresh</button>
@@ -265,6 +263,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useLocale();
 
 
 interface Session {
