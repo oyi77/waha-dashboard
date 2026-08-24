@@ -651,12 +651,12 @@ async function loadSessions() {
         sessions.value = JSON.parse(cached);
         const cacheTime = localStorage.getItem("waha_sessions_cache_time");
         const age = cacheTime ? Math.round((Date.now() - new Date(cacheTime).getTime()) / 1000) : 0;
-        error(`Using cached data (${age}s old) - API offline`);
+        error(t("toast.cacheOffline", { age }));
       } catch {
-        error("Failed to load sessions: " + errorMsg);
+        error(t("toast.loadSessionsFail") + errorMsg);
       }
     } else {
-      error("Failed to load sessions: " + errorMsg);
+      error(t("toast.loadSessionsFail") + errorMsg);
     }
   } finally {
     loading.value = false;
@@ -689,11 +689,11 @@ async function createSession() {
     if (form.start) {
       await post(`/api/sessions/${name}/start`);
     }
-    success("Session created");
+    success(t("toast.created"));
     closeModal();
     await loadSessions();
   } catch (e) {
-    error("Failed to create session: " + extractApiError(e));
+    error(t("toast.createFail") + extractApiError(e));
   }
 }
 
@@ -718,11 +718,11 @@ async function saveEdit() {
         .join(","),
     };
     await put(`/api/sessions/${editTarget.value}`, { config });
-    success("Session updated");
+    success(t("toast.updated"));
     closeModal();
     await loadSessions();
   } catch (e) {
-    error("Failed to update session: " + extractApiError(e));
+    error(t("toast.updateFail") + extractApiError(e));
   }
 }
 
@@ -737,10 +737,10 @@ function confirmStart(name: string) {
       confirmAction.value = null;
       try {
         await post(`/api/sessions/${name}/start`);
-        success(`Session ${name} started`);
+        success(t("toast.startedName", { name }));
         await loadSessions();
       } catch (e) {
-        error("Failed to start session: " + extractApiError(e));
+        error(t("toast.startFail") + extractApiError(e));
       }
     },
   };
@@ -756,10 +756,10 @@ function confirmStop(name: string) {
       confirmAction.value = null;
       try {
         await post(`/api/sessions/${name}/stop`);
-        success(`Session ${name} stopped`);
+        success(t("toast.stoppedName", { name }));
         await loadSessions();
       } catch (e) {
-        error("Failed to stop session: " + extractApiError(e));
+        error(t("toast.stopFail") + extractApiError(e));
       }
     },
   };
@@ -776,10 +776,10 @@ function confirmRestart(name: string) {
       confirmAction.value = null;
       try {
         await post(`/api/sessions/${name}/restart`);
-        success(`Session ${name} restarting`);
+        success(t("toast.restartingName", { name }));
         await loadSessions();
       } catch (e) {
-        error("Failed to restart session: " + extractApiError(e));
+        error(t("toast.restartFail") + extractApiError(e));
       }
     },
   };
@@ -796,11 +796,11 @@ function confirmDelete(name: string) {
       confirmAction.value = null;
       try {
         await del(`/api/sessions/${name}`);
-        success(`Session ${name} deleted`);
+        success(t("toast.deletedName", { name }));
         selected.value.delete(name);
         await loadSessions();
       } catch (e) {
-        error("Failed to delete session: " + extractApiError(e));
+        error(t("toast.deleteFail") + extractApiError(e));
       }
     },
   };
@@ -835,8 +835,8 @@ async function bulkStart() {
         }
       }
       selected.value.clear();
-      if (fail > 0) error(`Failed to start ${fail} session(s)`);
-      success(`Started ${ok} session(s)`);
+      if (fail > 0) error(t("toast.bulkStartFail", { n: fail }));
+      success(t("toast.bulkStartOk", { n: ok }));
       await loadSessions();
     },
   };
@@ -862,8 +862,8 @@ async function bulkStop() {
         }
       }
       selected.value.clear();
-      if (fail > 0) error(`Failed to stop ${fail} session(s)`);
-      success(`Stopped ${ok} session(s)`);
+      if (fail > 0) error(t("toast.bulkStopFail", { n: fail }));
+      success(t("toast.bulkStopOk", { n: ok }));
       await loadSessions();
     },
   };
@@ -889,8 +889,8 @@ async function bulkDelete() {
         }
       }
       selected.value.clear();
-      if (fail > 0) error(`Failed to delete ${fail} session(s)`);
-      success(`Deleted ${ok} session(s)`);
+      if (fail > 0) error(t("toast.bulkDeleteFail", { n: fail }));
+      success(t("toast.bulkDeleteOk", { n: ok }));
       await loadSessions();
     },
   };
@@ -917,8 +917,8 @@ async function startAllStopped() {
           fail++;
         }
       }
-      if (fail > 0) error(`Failed to start ${fail} session(s)`);
-      success(`Started ${ok} session(s)`);
+      if (fail > 0) error(t("toast.bulkStartFail", { n: fail }));
+      success(t("toast.bulkStartOk", { n: ok }));
       await loadSessions();
     },
   };
@@ -944,8 +944,8 @@ async function stopAllWorking() {
           fail++;
         }
       }
-      if (fail > 0) error(`Failed to stop ${fail} session(s)`);
-      success(`Stopped ${ok} session(s)`);
+      if (fail > 0) error(t("toast.bulkStopFail", { n: fail }));
+      success(t("toast.bulkStopOk", { n: ok }));
       await loadSessions();
     },
   };
@@ -969,13 +969,13 @@ async function openQr(name: string) {
         }
         if (updated?.status === "WORKING" || updated?.status === "FAILED") {
           qrData.value = "";
-          error("Session changed status while waiting for QR");
+          error(t("qr.statusChanged"));
           return;
         }
       }
       if (qrData.value === "pending") {
         qrData.value = "timeout";
-        error("Session did not enter SCAN_QR_CODE state in time");
+        error(t("qr.timeout"));
         return;
       }
     }
@@ -1097,10 +1097,10 @@ async function recoverAll() {
       "/api/health/sessions/recover-all",
       {}
     );
-    success(`✅ Recovered ${result.recovered} session(s)`);
+    success(t("toast.recovered", { n: result.recovered }));
     await loadSessions();
   } catch (e) {
-    error("Failed to recover sessions: " + extractApiError(e));
+    error(t("toast.recoverFail") + extractApiError(e));
   }
 }
 

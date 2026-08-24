@@ -289,7 +289,7 @@ async function load(): Promise<void> {
       if (updated) { selectedSession.value = updated; } else { selectedSession.value = null; }
     }
   } catch (err: unknown) {
-    error("Failed to load worker info: " + extractApiError(err));
+    error(t("wk.loadFail") + extractApiError(err));
   } finally {
     loading.value = false;
   }
@@ -312,10 +312,10 @@ async function switchEngine() {
   isSwitching.value = true;
   try {
     await post(`/api/sessions/${name}/switch-engine`, { engine: newEngine });
-    success(`Successfully switched engine for ${name}`);
+    success(t("wk.switched", { name }));
     await load();
   } catch (err: unknown) {
-    error("Failed to switch engine: " + extractApiError(err));
+    error(t("wk.switchFail") + extractApiError(err));
   } finally {
     isSwitching.value = false;
     closeSessionDetail();

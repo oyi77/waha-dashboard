@@ -375,7 +375,7 @@ async function runSearch() {
     results.value = res.channels ?? [];
     cursor.value = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
   } catch (e) {
-    error("Search failed: " + extractApiError(e));
+    error(t("ch.searchFail") + extractApiError(e));
     results.value = [];
   } finally {
     searching.value = false;
@@ -394,7 +394,7 @@ async function loadMore() {
     results.value = [...results.value, ...(res.channels ?? [])];
     cursor.value = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
   } catch (e) {
-    error("Failed to load more: " + extractApiError(e));
+    error(t("ch.loadMoreFail") + extractApiError(e));
   } finally {
     searching.value = false;
   }
@@ -427,7 +427,7 @@ async function openPreview(ch: Channel) {
       reactions: m.reactions ?? {},
     }));
   } catch (e) {
-    error("Failed to load messages: " + extractApiError(e));
+    error(t("ch.messagesFail") + extractApiError(e));
   } finally {
     previewLoading.value = false;
   }
@@ -452,9 +452,9 @@ async function followChannel(ch: Channel) {
     await post(`/api/${sessionName.value}/channels/${encodeURIComponent(ch.id)}/follow`);
     channels.value = [ch, ...channels.value.filter((c) => c.id !== ch.id)];
     results.value = results.value.filter((c) => c.id !== ch.id);
-    success(`✅ Followed "${ch.name}"`);
+    success(t("ch.followed", { name: ch.name }));
   } catch (e) {
-    error("Follow failed: " + extractApiError(e));
+    error(t("ch.followFail") + extractApiError(e));
   } finally {
     following.value = null;
   }
@@ -473,9 +473,9 @@ async function doUnfollow() {
   try {
     await del(`/api/${sessionName.value}/channels/${encodeURIComponent(ch.id)}`);
     channels.value = channels.value.filter((c) => c.id !== ch.id);
-    success(`Unfollowed "${ch.name}"`);
+    success(t("ch.unfollowed", { name: ch.name }));
   } catch (e) {
-    error("Unfollow failed: " + extractApiError(e));
+    error(t("ch.unfollowFail") + extractApiError(e));
   }
 }
 
@@ -487,9 +487,9 @@ async function toggleMute(ch: Channel) {
     if (action === "mute") next.add(ch.id);
     else next.delete(ch.id);
     muted.value = next;
-    success(action === "mute" ? "🔕 Muted" : "🔔 Unmuted");
+    success(action === "mute" ? t("ch.muted") : t("ch.unmuted"));
   } catch (e) {
-    error(`${action} failed: ` + extractApiError(e));
+    error(t("ch.muteFail", { action }) + extractApiError(e));
   }
 }
 

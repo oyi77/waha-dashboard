@@ -551,7 +551,7 @@ async function load() {
       sessionLc.autoStartDelay = lcSettings.value.autoStartDelay;
     }
   } catch (err) {
-    error("Failed to load settings: " + extractApiError(err));
+    error(t("st.loadFail") + extractApiError(err));
   }
 }
 
@@ -564,9 +564,9 @@ async function saveSettings() {
       restartAllSessions: sessionLc.restartAllSessions,
       autoStartDelay: sessionLc.autoStartDelay,
     });
-    success("Settings saved");
+    success(t("st.saved"));
   } catch (e) {
-    error("Failed to save settings: " + extractApiError(e));
+    error(t("st.saveFail") + extractApiError(e));
   } finally {
     saving.value = false;
   }
@@ -578,11 +578,11 @@ async function saveCredentials() {
     !credForm.newUsername ||
     !credForm.newPassword
   ) {
-    error("All fields are required");
+    error(t("st.allFields"));
     return;
   }
   if (credForm.newPassword.length < 6) {
-    error("Password must be at least 6 characters");
+    error(t("st.passShort"));
     return;
   }
   credSaving.value = true;
