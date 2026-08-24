@@ -184,7 +184,7 @@ const searchCategory = ref("");
 const searching = ref(false);
 const searched = ref(false);
 const results = ref<Channel[]>([]);
-let cursor: string | null = null;
+const cursor = ref<string | null>(null);
 
 const workingSessions = computed(() =>
   sessions.value.filter((s) => s.status === "WORKING").map((s) => s.name),
@@ -196,7 +196,7 @@ const searchReady = computed(() =>
     : searchView.value !== "",
 );
 
-const hasMore = computed(() => cursor !== null && cursor !== "");
+const hasMore = computed(() => cursor.value !== null && cursor.value !== "");
 
 watch(sessionName, () => {
   if (sessionName.value) {
@@ -259,14 +259,14 @@ function searchBody(limit: number): Record<string, unknown> {
 async function runSearch() {
   searching.value = true;
   searched.value = true;
-  cursor = null;
+  cursor.value = null;
   try {
     const res = await post<ChannelSearchResult>(
       `/api/${sessionName.value}/channels/search/${mode.value === "text" ? "by-text" : "by-view"}`,
       searchBody(20),
     );
     results.value = res.channels ?? [];
-    cursor = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
+    cursor.value = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
   } catch (e) {
     error("Search failed: " + extractApiError(e));
     results.value = [];
@@ -276,16 +276,16 @@ async function runSearch() {
 }
 
 async function loadMore() {
-  if (!cursor) return;
+  if (!cursor.value) return;
   searching.value = true;
   try {
-    const body = { ...searchBody(20), startCursor: cursor };
+    const body = { ...searchBody(20), startCursor: cursor.value };
     const res = await post<ChannelSearchResult>(
       `/api/${sessionName.value}/channels/search/${mode.value === "text" ? "by-text" : "by-view"}`,
       body,
     );
     results.value = [...results.value, ...(res.channels ?? [])];
-    cursor = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
+    cursor.value = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
   } catch (e) {
     error("Failed to load more: " + extractApiError(e));
   } finally {
