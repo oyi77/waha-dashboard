@@ -987,12 +987,59 @@ async function openQr(name: string) {
       data?.mimetype && data?.data
         ? `data:${data.mimetype};base64,${data.data}`
         : "";
+    startQrRefresh(name);
   } catch (err: unknown) {
     const msg =
       (err as { data?: { message?: string } })?.data?.message ??
       "Failed to load QR code";
     error(msg);
     qrData.value = "";
+  }
+}
+
+// QR codes rotate server-side roughly every 20s; refresh while the modal
+// is open so the user never scans an expired code.
+let qrRefreshTimer: ReturnType<typeof setInterval> | null = null;
+
+async function fetchQr(name: string) {
+  try {
+    const data = await get<{ mimetype?: string; data?: string }>(
+      `/api/${name}/auth/qr`,
+      { headers: { Accept: "application/json" } } as any,
+    );
+    qrData.value =
+      data?.mimetype && data?.data
+        ? `data:${data.mimetype};base64,${data.data}`
+        : "";
+  } catch (err: unknown) {
+    // Transient failures keep the previous frame on screen
+    if (!qrData.value) {
+      error(
+        (err as { data?: { message?: string } })?.data?.message ??
+          "Failed to load QR code",
+      );
+    }
+  }
+}
+
+function startQrRefresh(name: string) {
+  stopQrRefresh();
+  qrRefreshTimer = setInterval(async () => {
+    const session = sessions.value.find((s) => s.name === name);
+    if (session && session.status !== "SCAN_QR_CODE") {
+      qrSession.value = "";
+      stopQrRefresh();
+      await loadSessions();
+      return;
+    }
+    fetchQr(name);
+  }, 15_000);
+}
+
+function stopQrRefresh() {
+  if (qrRefreshTimer) {
+    clearInterval(qrRefreshTimer);
+    qrRefreshTimer = null;
   }
 }
 
@@ -1108,8 +1155,13 @@ onMounted(async () => {
   });
 });
 
+watch(qrSession, (v) => {
+  if (!v) stopQrRefresh();
+});
+
 onUnmounted(() => {
   stopPolling();
+  stopQrRefresh();
 });
 </script>
 

@@ -25,17 +25,21 @@
 
     <p v-if="shortDescription" class="ch-desc">{{ shortDescription }}</p>
 
-    <div v-if="channel.invite" class="ch-actions">
+    <div class="ch-actions">
       <a
+        v-if="channel.invite"
         :href="channel.invite"
         target="_blank"
         rel="noopener noreferrer"
         class="btn-ghost"
         style="text-decoration: none"
       >Open ↗</a>
-      <button class="btn-secondary" @click="copyInvite">
+      <button v-if="channel.invite" class="btn-secondary" @click="copyInvite">
         {{ copied ? "✓ Copied" : "Copy invite" }}
       </button>
+      <!-- Slot for parent-provided actions (follow/mute/unfollow) -->
+      <slot name="actions" />
+      <slot />
     </div>
   </div>
 </template>

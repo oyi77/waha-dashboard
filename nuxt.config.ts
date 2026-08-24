@@ -27,6 +27,15 @@ export default defineNuxtConfig({
           rel: "stylesheet",
           href: "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap",
         },
+        {
+          rel: "manifest",
+          href: "/dashboard/manifest.webmanifest",
+        },
+      ],
+      meta: [
+        { name: "theme-color", content: "#16a34a" },
+        { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       ],
     },
   },

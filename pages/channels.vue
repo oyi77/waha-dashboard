@@ -46,7 +46,24 @@
             v-for="ch in channels"
             :key="ch.id"
             :channel="ch"
-          />
+            @click="openPreview(ch)"
+          >
+            <template #actions>
+              <button
+                class="btn-ghost"
+                :title="muted.has(ch.id) ? 'Unmute channel' : 'Mute channel'"
+                @click.stop="toggleMute(ch)"
+              >
+                {{ muted.has(ch.id) ? "🔔 Unmute" : "🔕 Mute" }}
+              </button>
+              <button
+                class="btn-danger"
+                @click.stop="confirmUnfollow(ch, false)"
+              >
+                ✕ Unfollow
+              </button>
+            </template>
+          </ChannelCard>
         </div>
       </template>
 
@@ -116,7 +133,18 @@
             v-for="ch in results"
             :key="ch.id"
             :channel="ch"
-          />
+            @click="openPreview(ch)"
+          >
+            <template #actions>
+              <button
+                class="btn-primary"
+                :disabled="following === ch.id"
+                @click.stop="followChannel(ch)"
+              >
+                {{ following === ch.id ? "⟳ ..." : "+ Follow" }}
+              </button>
+            </template>
+          </ChannelCard>
         </div>
 
         <div v-if="hasMore" style="display: flex; justify-content: center; margin: 20px 0">
@@ -133,6 +161,48 @@
           <div class="empty-state-text">No channels found for this search.</div>
         </div>
       </template>
+
+      <!-- Channel Preview Modal -->
+      <div
+        v-if="previewChannel"
+        class="modal-overlay"
+        @click.self="previewChannel = null"
+        @keydown.escape="previewChannel = null"
+      >
+        <div class="modal-box" tabindex="-1" style="max-width: 560px">
+          <div class="modal-title">
+            📢 {{ previewChannel.name }}
+            <span v-if="previewChannel.verified" style="color: var(--info)">✓</span>
+          </div>
+          <div v-if="previewLoading" class="empty-state-text" style="padding: 24px 0">
+            ⟳ Loading messages...
+          </div>
+          <div v-else-if="previewMessages.length === 0" class="status-empty">
+            No recent messages available.
+          </div>
+          <div v-else class="preview-list">
+            <div
+              v-for="(msg, i) in previewMessages"
+              :key="i"
+              class="preview-msg card"
+            >
+              <div class="preview-meta">
+                <span>{{ formatTime(msg.timestamp) }}</span>
+                <span>👁 {{ msg.viewCount }}</span>
+                <span v-if="reactionSummary(msg)">💬 {{ reactionSummary(msg) }}</span>
+              </div>
+              <div class="preview-text">{{ msg.text }}</div>
+            </div>
+          </div>
+          <button
+            class="btn-ghost"
+            style="margin-top: 16px; width: 100%"
+            @click="previewChannel = null"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -157,7 +227,7 @@ interface CountryItem {
   name: string;
 }
 
-const { get, post } = useWahaApi();
+const { get, post, del } = useWahaApi();
 const { error } = useToast();
 
 const tabs = [
@@ -185,6 +255,19 @@ const searching = ref(false);
 const searched = ref(false);
 const results = ref<Channel[]>([]);
 const cursor = ref<string | null>(null);
+const muted = ref<Set<string>>(new Set());
+const following = ref<string | null>(null);
+
+// Preview modal
+interface ChannelMessageView {
+  text: string;
+  timestamp: number | null;
+  viewCount: number;
+  reactions: Record<string, number>;
+}
+const previewChannel = ref<Channel | null>(null);
+const previewLoading = ref(false);
+const previewMessages = ref<ChannelMessageView[]>([]);
 
 const workingSessions = computed(() =>
   sessions.value.filter((s) => s.status === "WORKING").map((s) => s.name),
@@ -293,6 +376,91 @@ async function loadMore() {
   }
 }
 
+function extractMessageText(m: any): string {
+  const ext = m?.message?.extendedTextMessage ?? m?.message?.conversation ??
+    m?.message?.imageMessage ?? m?.message?.videoMessage ?? m?.message;
+  return String(
+    ext?.text ?? ext?.caption ?? m?.message?.documentMessage?.title ?? "",
+  ).slice(0, 400);
+}
+
+async function openPreview(ch: Channel) {
+  if (!ch.invite && !ch.id) return;
+  previewChannel.value = ch;
+  previewLoading.value = true;
+  previewMessages.value = [];
+  try {
+    const idOrCode = ch.invite || ch.id;
+    const msgs = await get<
+      { message: any; viewCount?: number; reactions?: Record<string, number> }[]
+    >(
+      `/api/${sessionName.value}/channels/${encodeURIComponent(idOrCode)}/messages/preview?limit=10`,
+    );
+    previewMessages.value = (msgs ?? []).map((m) => ({
+      text: extractMessageText(m.message) || "(media message)",
+      timestamp: m.message?.messageTimestamp ?? null,
+      viewCount: m.viewCount ?? 0,
+      reactions: m.reactions ?? {},
+    }));
+  } catch (e) {
+    error("Failed to load messages: " + extractApiError(e));
+  } finally {
+    previewLoading.value = false;
+  }
+}
+
+function formatTime(unix: number | null): string {
+  if (!unix) return "-";
+  const ms = unix > 1e12 ? unix : unix * 1000;
+  return new Date(ms).toLocaleString();
+}
+
+function reactionSummary(reactions: Record<string, number>): string {
+  return Object.entries(reactions)
+    .filter(([, n]) => n > 0)
+    .map(([emoji, n]) => `${emoji}${n}`)
+    .join(" ");
+}
+
+async function followChannel(ch: Channel) {
+  following.value = ch.id;
+  try {
+    await post(`/api/${sessionName.value}/channels/${encodeURIComponent(ch.id)}/follow`);
+    channels.value = [ch, ...channels.value.filter((c) => c.id !== ch.id)];
+    results.value = results.value.filter((c) => c.id !== ch.id);
+    success(`✅ Followed "${ch.name}"`);
+  } catch (e) {
+    error("Follow failed: " + extractApiError(e));
+  } finally {
+    following.value = null;
+  }
+}
+
+async function confirmUnfollow(ch: Channel) {
+  if (!confirm(`Unfollow "${ch.name}"?`)) return;
+  try {
+    await del(`/api/${sessionName.value}/channels/${encodeURIComponent(ch.id)}`);
+    channels.value = channels.value.filter((c) => c.id !== ch.id);
+    success(`Unfollowed "${ch.name}"`);
+  } catch (e) {
+    error("Unfollow failed: " + extractApiError(e));
+  }
+}
+
+async function toggleMute(ch: Channel) {
+  const action = muted.value.has(ch.id) ? "unmute" : "mute";
+  try {
+    await post(`/api/${sessionName.value}/channels/${encodeURIComponent(ch.id)}/${action}`);
+    const next = new Set(muted.value);
+    if (action === "mute") next.add(ch.id);
+    else next.delete(ch.id);
+    muted.value = next;
+    success(action === "mute" ? "🔕 Muted" : "🔔 Unmuted");
+  } catch (e) {
+    error(`${action} failed: ` + extractApiError(e));
+  }
+}
+
 onMounted(async () => {
   try {
     const data = await get<{ name: string; status: string }[]>("/api/sessions?all=true");
@@ -341,5 +509,34 @@ onMounted(async () => {
 .discover-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+/* Channel preview modal */
+
+.preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.preview-msg {
+  padding: 10px 12px;
+}
+
+.preview-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.preview-text {
+  font-size: 13px;
+  color: var(--text-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 </style>
