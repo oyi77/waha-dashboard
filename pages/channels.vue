@@ -204,6 +204,14 @@ watch(sessionName, () => {
     if (tabValue.value === "mine") loadMine();
   }
 });
+interface ChannelSearchResult {
+  page?: {
+    endCursor?: string | null;
+    hasNextPage?: boolean;
+  };
+  channels?: Channel[];
+}
+
 
 function switchTab(value: string) {
   tabValue.value = value;
@@ -243,7 +251,7 @@ function searchBody(limit: number): Record<string, unknown> {
     view: searchView.value,
     limit,
   };
-  if (searchCountry.value) body.countryCode = searchCountry.value;
+  if (searchCountry.value) body.countries = [searchCountry.value];
   if (searchCategory.value) body.categories = [searchCategory.value];
   return body;
 }
@@ -253,12 +261,12 @@ async function runSearch() {
   searched.value = true;
   cursor = null;
   try {
-    const res = await post<{ channels?: Channel[]; nextStartCursor?: string | null }>(
+    const res = await post<ChannelSearchResult>(
       `/api/${sessionName.value}/channels/search/${mode.value === "text" ? "by-text" : "by-view"}`,
       searchBody(20),
     );
     results.value = res.channels ?? [];
-    cursor = res.nextStartCursor ?? null;
+    cursor = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
   } catch (e) {
     error("Search failed: " + extractApiError(e));
     results.value = [];
@@ -272,12 +280,12 @@ async function loadMore() {
   searching.value = true;
   try {
     const body = { ...searchBody(20), startCursor: cursor };
-    const res = await post<{ channels?: Channel[]; nextStartCursor?: string | null }>(
+    const res = await post<ChannelSearchResult>(
       `/api/${sessionName.value}/channels/search/${mode.value === "text" ? "by-text" : "by-view"}`,
       body,
     );
     results.value = [...results.value, ...(res.channels ?? [])];
-    cursor = res.nextStartCursor ?? null;
+    cursor = res.page?.hasNextPage ? (res.page.endCursor ?? null) : null;
   } catch (e) {
     error("Failed to load more: " + extractApiError(e));
   } finally {
