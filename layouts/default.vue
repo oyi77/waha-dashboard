@@ -76,6 +76,14 @@
         </button>
         <span class="topbar-title">{{ pageTitle }}</span>
         <div class="topbar-spacer" />
+        <button
+          class="topbar-link theme-toggle"
+          :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
+          :title="isDark ? 'Light theme' : 'Dark theme'"
+          @click="toggleTheme"
+        >
+          {{ isDark ? "☀" : "☾" }}
+        </button>
         <a
           href="https://waha.devlike.pro/docs"
           target="_blank"
@@ -87,6 +95,7 @@
       </header>
 
       <main>
+        <StatusAlertBanner @jump="goToSessions" />
         <slot />
       </main>
     </div>
@@ -126,7 +135,34 @@ function closeSidebar() {
   sidebarOpen.value = false;
 }
 
+const router = useRouter();
+function goToSessions() {
+  router.push("/Sessions");
+}
+
+// Theme: persisted in localStorage, applied via [data-theme] on <html>
+const isDark = useState<boolean>("waha_theme_dark", () => true);
+
+function applyTheme() {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute(
+    "data-theme",
+    isDark.value ? "dark" : "light",
+  );
+}
+
+function toggleTheme() {
+  isDark.value = !isDark.value;
+  localStorage.setItem("waha_theme", isDark.value ? "dark" : "light");
+  applyTheme();
+}
+
 onMounted(() => {
+  const saved = localStorage.getItem("waha_theme");
+  if (saved === "light" || saved === "dark") {
+    isDark.value = saved === "dark";
+  }
+  applyTheme();
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && sidebarOpen.value) sidebarOpen.value = false;
   });
@@ -312,5 +348,18 @@ onMounted(() => {
     background: rgba(0, 0, 0, 0.5);
     z-index: 150;
   }
+}
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-hover);
 }
 </style>

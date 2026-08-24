@@ -212,6 +212,15 @@
             ↻ Restart
           </button>
           <button
+            v-if="session.status === 'WORKING'"
+            class="action-btn action-settings"
+            title="Timelock & message quota"
+            aria-label="Account status"
+            @click="openAccountStatus(session.name)"
+          >
+            ⚡ Status
+          </button>
+          <button
             v-if="session.status === 'SCAN_QR_CODE'"
             class="action-btn action-qr"
             title="Scan QR Code"
@@ -332,6 +341,84 @@
       </div>
     </div>
 
+    <!-- Account Status Modal (timelock + message capping) -->
+    <div
+      v-if="statusTarget"
+      class="modal-overlay"
+      @click.self="statusTarget = ''"
+      @keydown.escape="statusTarget = ''"
+    >
+      <div class="modal-box" tabindex="-1">
+        <div class="modal-title">⚡ Account Status — {{ statusTarget }}</div>
+        <div v-if="statusLoading" class="empty-state-text" style="padding: 24px 0">
+          ⟳ Loading...
+        </div>
+        <template v-else>
+          <div class="status-section">
+            <div class="status-section-title">Reachout Timelock</div>
+            <div v-if="statusTimelock" class="status-rows">
+              <div class="status-row">
+                <span>Restriction</span>
+                <span
+                  class="badge"
+                  :class="statusTimelock.isActive ? 'badge-failed' : 'badge-working'"
+                >
+                  {{ statusTimelock.isActive ? "ACTIVE — messaging new chats limited" : "None (clear)" }}
+                </span>
+              </div>
+              <div class="status-row">
+                <span>Type</span>
+                <code>{{ statusTimelock.enforcementType }}</code>
+              </div>
+              <div v-if="statusTimelock.timeEnforcementEnds" class="status-row">
+                <span>Ends at</span>
+                <code>{{ formatTime(statusTimelock.timeEnforcementEnds) }}</code>
+              </div>
+            </div>
+            <div v-else class="status-empty">No timelock data reported.</div>
+          </div>
+          <div class="status-section">
+            <div class="status-section-title">New-Chat Message Quota</div>
+            <div v-if="statusCapping && statusCapping.cappingStatus !== 'NONE'" class="status-rows">
+              <div class="status-row">
+                <span>Status</span>
+                <span
+                  class="badge"
+                  :class="cappingBadgeClass(statusCapping.cappingStatus)"
+                >{{ statusCapping.cappingStatus }}</span>
+              </div>
+              <div class="status-row">
+                <span>Usage</span>
+                <code>{{ statusCapping.usedQuota }} / {{ statusCapping.totalQuota }}</code>
+              </div>
+              <div class="quota-bar-wrap">
+                <div class="quota-bar">
+                  <div
+                    class="quota-fill"
+                    :style="{ width: quotaPercent + '%' }"
+                    :class="{ 'quota-warn': quotaPercent >= 80 }"
+                  />
+                </div>
+                <span class="quota-pct">{{ quotaPercent }}%</span>
+              </div>
+              <div class="status-row">
+                <span>Cycle ends</span>
+                <code>{{ formatTime(statusCapping.cycleEnd) }}</code>
+              </div>
+            </div>
+            <div v-else class="status-empty">Account is not subject to message capping.</div>
+          </div>
+        </template>
+        <button
+          class="btn-ghost"
+          style="margin-top: 16px; width: 100%"
+          @click="statusTarget = ''"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
     <!-- Confirm Modal -->
     <div
       v-if="confirmAction"
@@ -399,6 +486,24 @@ const confirmAction = ref<ConfirmAction | null>(null);
 const editTarget = ref<string | null>(null);
 const selected = ref<Set<string>>(new Set());
 
+// Account status modal (timelock + capping)
+interface ReachoutTimelock {
+  enforcementType: string;
+  isActive: boolean;
+  timeEnforcementEnds: number | null;
+}
+interface MessageCapping {
+  cappingStatus: string;
+  totalQuota: number;
+  usedQuota: number;
+  cycleStart: number;
+  cycleEnd: number;
+}
+const statusTarget = ref("");
+const statusLoading = ref(false);
+const statusTimelock = ref<ReachoutTimelock | null>(null);
+const statusCapping = ref<MessageCapping | null>(null);
+
 // Filter state
 const filterStatus = ref("ALL");
 const searchQuery = ref("");
@@ -453,7 +558,6 @@ const emptyText = computed(() => {
   const map: Record<string, string> = {
     ALL: "No sessions match your filter.",
     WORKING: "No working sessions right now.",
-    STARTING: "No sessions are starting.",
     STOPPED: "No stopped sessions.",
     SCAN_QR_CODE: "No sessions waiting for QR scan.",
     FAILED: "No failed sessions. All clear!",
@@ -472,7 +576,7 @@ const allTags = computed(() => {
 });
 
 const filteredSessions = computed(() => {
-  let list = sessions.value;
+  let list = applyLiveStatuses(sessions.value);
 
   if (filterStatus.value !== "ALL") {
     list = list.filter((s) => s.status === filterStatus.value);
@@ -891,6 +995,43 @@ async function openQr(name: string) {
   }
 }
 
+// ---- Account Status (timelock + capping) ----
+async function openAccountStatus(name: string) {
+  statusTarget.value = name;
+  statusLoading.value = true;
+  statusTimelock.value = null;
+  statusCapping.value = null;
+  const [timelockRes, cappingRes] = await Promise.allSettled([
+    get<ReachoutTimelock>(`/api/sessions/${name}/timelock`),
+    get<MessageCapping>(`/api/sessions/${name}/capping`),
+  ]);
+  if (timelockRes.status === "fulfilled") statusTimelock.value = timelockRes.value;
+  if (cappingRes.status === "fulfilled") statusCapping.value = cappingRes.value;
+  statusLoading.value = false;
+}
+
+function formatTime(unix: number | null | undefined): string {
+  if (!unix || unix < 1) return "-";
+  // WAHA may report seconds or milliseconds
+  const ms = unix > 1e12 ? unix : unix * 1000;
+  return new Date(ms).toLocaleString();
+}
+
+function cappingBadgeClass(status: string): string {
+  if (status === "CAPPED") return "badge-failed";
+  if (status.includes("WARN")) return "badge-scan";
+  return "badge-working";
+}
+
+const quotaPercent = computed(() => {
+  const c = statusCapping.value;
+  if (!c || !c.totalQuota) return 0;
+  return Math.min(100, Math.round((c.usedQuota / c.totalQuota) * 100));
+});
+
+// ---- Realtime (WS session.status overlay) ----
+const { applyTo: applyLiveStatuses, ensureConnected } = useWahaRealtime();
+
 // ---- Modal helpers ----
 function closeModal() {
   showCreate.value = false;
@@ -942,6 +1083,7 @@ onMounted(async () => {
   }
   
   await Promise.allSettled([loadSessions(), loadEngines()]);
+  ensureConnected();
   startPolling();
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
@@ -992,7 +1134,6 @@ onUnmounted(() => {
 .stat-scan {
   color: #60a5fa;
 }
-
 /* ── 5-column grid for stat cards ── */
 .grid-5 {
   display: grid;
@@ -1334,5 +1475,83 @@ onUnmounted(() => {
     font-size: 12px;
     padding: 8px 8px;
   }
+}
+
+/* ── Account Status Modal ── */
+.status-section {
+  margin-bottom: 18px;
+}
+
+.status-section-title {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.status-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.status-row code {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.status-empty {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 4px 0;
+}
+
+.quota-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+
+.quota-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.quota-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.quota-fill.quota-warn {
+  background: var(--danger);
+}
+
+.quota-pct {
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 34px;
+  text-align: right;
 }
 </style>

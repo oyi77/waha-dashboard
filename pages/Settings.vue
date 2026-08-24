@@ -53,6 +53,52 @@
         </div>
       </div>
 
+      <!-- Server Resource Health -->
+      <div class="settings-section card">
+        <div class="section-title">
+          <span class="section-icon">💾</span>
+          Server Resources
+        </div>
+        <div v-if="serverHealthLoading" class="health-loading">
+          Loading server health...
+        </div>
+        <div
+          v-else-if="serverHealth && Object.keys(serverHealth).length > 0"
+          class="server-health-list"
+        >
+          <div
+            v-for="(indicator, name) in serverHealth"
+            :key="name"
+            class="server-health-row"
+          >
+            <div class="sh-name">
+              {{ prettyIndicatorName(String(name)) }}
+              <span v-if="indicator.diskPath" class="sh-path">{{ indicator.diskPath }}</span>
+            </div>
+            <div class="sh-bar-wrap">
+              <div class="sh-bar">
+                <div
+                  class="sh-fill"
+                  :class="{
+                    'sh-warn': freeRatio(indicator) < 0.2,
+                    'sh-crit': freeRatio(indicator) < 0.05,
+                  }"
+                  :style="{ width: usedPercent(indicator) + '%' }"
+                />
+              </div>
+              <span class="sh-free">{{ formatBytes(indicator.free) }} free</span>
+            </div>
+            <span
+              class="badge"
+              :class="indicator.status === 'up' ? 'badge-working' : 'badge-failed'"
+            >{{ indicator.status }}</span>
+          </div>
+        </div>
+        <div v-else class="health-unavailable">
+          Server health indicators unavailable (requires Manage permission).
+        </div>
+      </div>
+
       <!-- Session Lifecycle -->
       <div class="settings-section card">
         <div class="section-title">
@@ -364,6 +410,16 @@ const credSaving = ref(false);
 const healthData = ref<SessionHealthSummary | null>(null);
 const healthLoading = ref(true);
 
+// Server resource health (disk space / mongo indicators from GET /health)
+interface HealthIndicator {
+  status: string;
+  free?: number;
+  threshold?: number;
+  diskPath?: string;
+}
+const serverHealth = ref<Record<string, HealthIndicator> | null>(null);
+const serverHealthLoading = ref(true);
+
 // Session lifecycle settings from API (persisted to DB)
 const sessionLc = reactive<SessionLcSettings>({
   autoRestartOnBoot: true,
@@ -403,6 +459,27 @@ const apiKeyMasked = computed(() => {
   return "****" + key.slice(-4);
 });
 
+function prettyIndicatorName(raw: string): string {
+  const map: Record<string, string> = {
+    "mediaFiles.space": "Media files disk",
+    "sessionsFiles.space": "Session files disk",
+    mongodb: "MongoDB store",
+  };
+  return map[raw] ?? raw;
+}
+
+function freeRatio(indicator: HealthIndicator): number {
+  if (!indicator.threshold) return 1;
+  return (indicator.free ?? 0) / indicator.threshold;
+}
+
+// Bar fills as free space approaches the threshold (minimum acceptable free)
+function usedPercent(indicator: HealthIndicator): number {
+  if (!indicator.threshold || !indicator.free) return 0;
+  const ratio = Math.min(1, freeRatio(indicator));
+  return Math.round((1 - ratio) * 100);
+}
+
 function formatTimestamp(iso: string): string {
   try {
     const d = new Date(iso);
@@ -421,6 +498,30 @@ async function loadHealth() {
   } finally {
     healthLoading.value = false;
   }
+}
+
+async function loadServerHealth() {
+  serverHealthLoading.value = true;
+  try {
+    const res = await get<{ details?: Record<string, HealthIndicator> }>("/health");
+    serverHealth.value = res.details ?? null;
+  } catch {
+    serverHealth.value = null;
+  } finally {
+    serverHealthLoading.value = false;
+  }
+}
+
+function formatBytes(bytes?: number): string {
+  if (!bytes && bytes !== 0) return "-";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let v = bytes;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
 async function load() {
@@ -508,6 +609,7 @@ async function saveCredentials() {
 onMounted(() => {
   load();
   loadHealth();
+  loadServerHealth();
 });
 </script>
 
@@ -848,5 +950,71 @@ onMounted(() => {
     align-items: flex-start;
     gap: 6px;
   }
+}
+
+/* Server resource health */
+
+.server-health-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.server-health-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.sh-name {
+  min-width: 180px;
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+.sh-path {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--font-mono, monospace);
+}
+
+.sh-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+}
+
+.sh-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.sh-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.sh-fill.sh-warn {
+  background: var(--warning);
+}
+
+.sh-fill.sh-crit {
+  background: var(--danger);
+}
+
+.sh-free {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 </style>
