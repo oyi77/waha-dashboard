@@ -15,18 +15,18 @@
         <div class="page-subtitle">{{ t("plus.templates.subtitle") }}</div>
       </div>
       <button class="btn-primary" @click="showCreate = true">
-        + New Template
+        {{ t("tpl.newTemplate") }}
       </button>
     </div>
 
     <div v-if="loading" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading templates…</div>
+      <div class="empty-state-text">{{ t("tpl.loading") }}</div>
     </div>
 
     <div v-else-if="templates.length === 0" class="empty-state">
       <div class="empty-state-icon">▣</div>
-      <div class="empty-state-text">No templates yet</div>
+      <div class="empty-state-text">{{ t("tpl.none") }}</div>
     </div>
 
     <div v-else class="card" style="padding: 0">
@@ -79,13 +79,13 @@
       @click.self="showCreate = false"
     >
       <div class="modal-box">
-        <div class="modal-title">New Template</div>
+        <div class="modal-title">{{ t("tpl.createTitle") }}</div>
         <div class="form-group">
-          <label class="form-label">Name</label>
+          <label class="form-label">{{ t("tpl.name") }}</label>
           <input v-model="createForm.name" placeholder="my-template" />
         </div>
         <div class="form-group">
-          <label class="form-label">Type</label>
+          <label class="form-label">{{ t("tpl.type") }}</label>
           <select v-model="createForm.type">
             <option value="text">Text</option>
             <option value="image">Image</option>
@@ -93,11 +93,11 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Tags (comma-separated)</label>
+          <label class="form-label">{{ t("tpl.tagsCsv") }}</label>
           <input v-model="createForm.tags" placeholder="tag1, tag2" />
         </div>
         <div class="form-group">
-          <label class="form-label">Payload (JSON)</label>
+          <label class="form-label">{{ t("tpl.payloadJson") }}</label>
           <textarea
             v-model="createForm.payload"
             rows="5"
@@ -126,7 +126,7 @@
       @click.self="deleteConfirm.open = false"
     >
       <div class="modal-box">
-        <div class="modal-title">Delete Template</div>
+        <div class="modal-title">{{ t("tpl.deleteTitle") }}</div>
         <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 20px">
           Are you sure you want to delete <strong style="color: var(--text)">{{ deleteConfirm.name }}</strong>?
         </p>
@@ -147,11 +147,11 @@
       @click.self="sendModal.open = false"
     >
       <div class="modal-box">
-        <div class="modal-title">Send Template — {{ sendModal.name }}</div>
+        <div class="modal-title">{{ t("tpl.sendTitle") }} — {{ sendModal.name }}</div>
         <div class="form-group">
           <label class="form-label">Session</label>
           <select v-model="sendModal.session">
-            <option value="">Select session…</option>
+            <option value="">{{ t("ak.selectSession") }}</option>
             <option v-for="s in sessions" :key="s" :value="s">{{ s }}</option>
           </select>
         </div>

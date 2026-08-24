@@ -5,17 +5,17 @@
         <div class="page-title">{{ t("plus.apikeys.title") }}</div>
         <div class="page-subtitle">{{ t("plus.apikeys.subtitle") }}</div>
       </div>
-      <button class="btn-primary" @click="showCreate = true">+ New Key</button>
+      <button class="btn-primary" @click="showCreate = true">{{ t("ak.newKey") }}</button>
     </div>
 
     <div v-if="loading" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading keys…</div>
+      <div class="empty-state-text">{{ t("ak.loading") }}</div>
     </div>
 
     <div v-else-if="keys.length === 0" class="empty-state">
       <div class="empty-state-icon">⚿</div>
-      <div class="empty-state-text">No API keys yet.</div>
+      <div class="empty-state-text">{{ t("ak.none") }}</div>
     </div>
 
     <div v-else class="card" style="padding: 0; overflow: hidden">
@@ -66,9 +66,9 @@
     <!-- Create Modal -->
     <div v-if="showCreate" class="modal-overlay" @click.self="showCreate = false">
       <div class="modal-box">
-        <div class="modal-title">Create API Key</div>
+        <div class="modal-title">{{ t("ak.createTitle") }}</div>
         <div class="form-group">
-          <label class="form-label">Type</label>
+          <label class="form-label">{{ t("ak.type") }}</label>
           <div class="radio-group">
             <label class="radio-option">
               <input v-model="form.isAdmin" type="radio" :value="true" />
@@ -87,9 +87,9 @@
           </div>
         </div>
         <div v-if="!form.isAdmin" class="form-group">
-          <label class="form-label">Session</label>
+          <label class="form-label">{{ t("ak.session") }}</label>
           <select v-model="form.session">
-            <option value="">Select session…</option>
+            <option value="">{{ t("ak.selectSession") }}</option>
             <option v-for="s in sessions" :key="s" :value="s">{{ s }}</option>
           </select>
         </div>
@@ -110,9 +110,9 @@
     <!-- Created Key Modal -->
     <div v-if="createdKeyData" class="modal-overlay" @click.self="createdKeyData = null">
       <div class="modal-box">
-        <div class="modal-title">✓ API Key Created</div>
+        <div class="modal-title">{{ t("ak.createdTitle") }}</div>
         <p class="text-muted" style="font-size: 13px; margin-bottom: 16px">
-          Copy this key now — it won't be shown again.
+          {{ t("ak.copyNow") }}
         </p>
         <div class="code-block" style="word-break: break-all; user-select: all">
           {{ createdKeyData.key }}
@@ -134,7 +134,7 @@
     <!-- Delete Confirm -->
     <div v-if="deleteTargetId" class="modal-overlay" @click.self="deleteTargetId = ''">
       <div class="modal-box">
-        <div class="modal-title">Delete API Key</div>
+        <div class="modal-title">{{ t("ak.deleteTitle") }}</div>
         <p class="text-muted" style="font-size: 13px; margin-bottom: 24px">
           Permanently delete this API key? Any clients using it will lose access immediately.
         </p>

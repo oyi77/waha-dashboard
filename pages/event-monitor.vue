@@ -20,7 +20,7 @@
           :class="connected ? 'badge-working' : 'badge-failed'"
         >
           <span class="badge-dot" />{{
-            connected ? "Connected" : "Disconnected"
+            connected ? t("em.connected") : t("em.disconnected")
           }}
         </span>
         <span
@@ -28,9 +28,9 @@
           :class="connected ? 'dot-connected' : 'dot-disconnected'"
         />
         <button class="btn-ghost" @click="togglePause">
-          {{ paused ? "▶ Resume" : "⏸ Pause" }}
+          {{ paused ? t("em.resume") : t("em.pause") }}
         </button>
-        <button class="btn-ghost" @click="clearEvents">⎑ Clear</button>
+        <button class="btn-ghost" @click="clearEvents">{{ t("em.clear") }}</button>
       </div>
     </div>
 
@@ -45,13 +45,13 @@
       </div>
       <div class="terminal-body font-mono" ref="terminalBody">
         <div v-if="showReconnectButton" class="terminal-empty">
-          > Connection lost after {{ MAX_RECONNECT }} attempts.
+          {{ t("em.connectionLost", { n: MAX_RECONNECT }) }}
           <button class="btn-secondary" style="margin-left: 8px; font-size: 13px" @click="manualReconnect">
-            Reconnect
+            {{ t("em.reconnect") }}
           </button>
         </div>
         <div v-else-if="events.length === 0" class="terminal-empty">
-          > Waiting for incoming events...
+          {{ t("em.waiting") }}
         </div>
         <div v-for="(evt, idx) in events" :key="idx" class="event-row">
           <span class="event-time">[{{ evt.time }}]</span>

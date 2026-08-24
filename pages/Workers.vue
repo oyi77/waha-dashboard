@@ -53,7 +53,7 @@
             </div>
           </div>
           <div class="engine-breakdown" v-if="Object.keys(engineCounts).length > 0">
-            <div class="section-title">Engine Distribution</div>
+            <div class="section-title">{{ t("workers.engineDist") }}</div>
             <div class="engine-bars">
               <div v-for="(count, eng) in engineCounts" :key="eng" class="engine-bar-row">
                 <span class="engine-label" :class="`engine-${String(eng).toLowerCase()}`">{{ eng }}</span>
@@ -155,7 +155,7 @@
             @click="switchEngine"
             :disabled="isSwitching || !engineToSwitch || engineToSwitch === selectedSession.engine"
           >
-            {{ isSwitching ? "Switching..." : "Switch" }}
+            {{ isSwitching ? t("workers.switching") : t("workers.switch") }}
           </button>
         </div>
       </div>
