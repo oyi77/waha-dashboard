@@ -15,7 +15,7 @@
 
     <div v-if="loadingEngines" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading engines…</div>
+      <div class="empty-state-text">{{ t("eg.loading") }}</div>
     </div>
 
     <div
@@ -66,7 +66,7 @@
 
     <div class="section-title" style="margin-top: 32px">Active Sessions</div>
     <div v-if="sessions.length === 0" class="empty-state">
-      <div class="empty-state-text">No sessions</div>
+      <div class="empty-state-text">{{ t("eg.noSessions") }}</div>
     </div>
     <div v-else>
       <div
@@ -177,7 +177,7 @@
     >
       <div class="modal-box">
         <div class="modal-title">
-          Create Session with
+          {{ t("eg.createWith") }}
           <span
             class="badge"
             :class="`engine-${createForm.engine.toLowerCase()}`"
@@ -185,7 +185,7 @@
           >
         </div>
         <div class="form-group">
-          <label class="form-label">Session Name</label>
+          <label class="form-label">{{ t("form.sessionName") }}</label>
           <input v-model="createForm.name" placeholder="default" />
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px">
@@ -212,13 +212,13 @@
     >
       <div class="modal-box">
         <div class="modal-title">
-          Switch Engine for
+          {{ t("eg.switchFor") }}
           <span style="font-family: var(--font-mono)">{{
             sessionToSwitch?.name
           }}</span>
         </div>
         <div class="form-group">
-          <label class="form-label">Current Engine</label>
+          <label class="form-label">{{ t("eg.currentEngine") }}</label>
           <div style="margin-bottom: 16px">
             <span
               v-if="resolveEngine(sessionToSwitch?.engine)"
@@ -230,7 +230,7 @@
             <span v-else style="color: var(--text-dim)">Unknown</span>
           </div>
 
-          <label class="form-label">New Engine</label>
+          <label class="form-label">{{ t("eg.newEngine") }}</label>
           <select v-model="switchForm.engine">
             <option
               v-for="eng in fallbackEngines"

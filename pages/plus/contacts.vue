@@ -30,7 +30,7 @@
           />
 
           <div v-if="preview.length > 0" style="margin-top: 16px">
-            <div class="form-label">Preview ({{ preview.length }} numbers)</div>
+            <div class="form-label">{{ t("ct.preview", { n: preview.length }) }}</div>
             <div
               class="code-block"
               style="max-height: 120px; overflow-y: auto; margin-top: 6px"
@@ -44,9 +44,9 @@
         <div class="card" style="margin-top: 16px">
           <div class="section-title">Bulk Check</div>
           <div class="form-group">
-            <label class="form-label">Session</label>
+            <label class="form-label">{{ t("ak.session") }}</label>
             <select v-model="session">
-              <option value="">Select session…</option>
+              <option value="">{{ t("ak.selectSession") }}</option>
               <option v-for="s in sessions" :key="s" :value="s">{{ s }}</option>
             </select>
           </div>
@@ -65,7 +65,7 @@
         <div v-if="results.length === 0" class="empty-state">
           <div class="empty-state-icon">◑</div>
           <div class="empty-state-text">
-            Upload a CSV and run check to see results
+            {{ t("ct.uploadHint") }}
           </div>
         </div>
         <div v-else>

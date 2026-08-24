@@ -19,20 +19,20 @@
     <div class="layout-grid">
       <div>
         <div class="card" style="margin-bottom: 16px">
-          <div class="section-title">New Rule</div>
+          <div class="section-title">{{ t("ar.newRule") }}</div>
           <div class="form-group">
-            <label class="form-label">Keyword</label>
+            <label class="form-label">{{ t("ar.keyword") }}</label>
             <input v-model="createForm.keyword" placeholder="hello" />
           </div>
           <div class="form-group">
-            <label class="form-label">Reply Type</label>
+            <label class="form-label">{{ t("ar.replyType") }}</label>
             <select v-model="createForm.type">
               <option value="text">Text</option>
               <option value="image">Image</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Reply Payload (JSON)</label>
+            <label class="form-label">{{ t("ar.replyPayload") }}</label>
             <textarea
               v-model="createForm.payload"
               rows="4"
@@ -48,7 +48,7 @@
         <div class="card">
           <div class="section-title">Test Auto-Reply</div>
           <div class="form-group">
-            <label class="form-label">Test Message</label>
+            <label class="form-label">{{ t("ar.testMessage") }}</label>
             <input v-model="testInput" placeholder="Type a message to test…" />
           </div>
           <button
@@ -59,7 +59,7 @@
             Test
           </button>
           <div v-if="testResult !== null">
-            <div class="form-label">Result</div>
+            <div class="form-label">{{ t("ar.result") }}</div>
             <div class="code-block" style="margin-top: 6px">
               {{ JSON.stringify(testResult, null, 2) }}
             </div>
@@ -71,11 +71,11 @@
         <div class="section-title">Rules ({{ rules.length }})</div>
         <div v-if="loading" class="empty-state">
           <div class="empty-state-icon">⟳</div>
-          <div class="empty-state-text">Loading rules…</div>
+          <div class="empty-state-text">{{ t("ar.loading") }}</div>
         </div>
         <div v-else-if="rules.length === 0" class="empty-state">
           <div class="empty-state-icon">↩</div>
-          <div class="empty-state-text">No auto-reply rules</div>
+          <div class="empty-state-text">{{ t("ar.none") }}</div>
         </div>
         <div v-else class="card" style="padding: 0; overflow: hidden">
           <table>

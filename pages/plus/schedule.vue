@@ -19,23 +19,23 @@
 
     <div class="layout-grid">
       <div class="card">
-        <div class="section-title">New Scheduled Message</div>
+        <div class="section-title">{{ t("sc.newMsg") }}</div>
         <div class="form-group">
-          <label class="form-label">Session</label>
+          <label class="form-label">{{ t("ak.session") }}</label>
           <select v-model="form.session">
-            <option value="">Select session…</option>
+            <option value="">{{ t("ak.selectSession") }}</option>
             <option v-for="s in sessions" :key="s" :value="s">{{ s }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Chat ID</label>
+          <label class="form-label">{{ t("sc.chatId") }}</label>
           <input
             v-model="form.chatId"
             placeholder="1234567890@s.whatsapp.net"
           />
         </div>
         <div class="form-group">
-          <label class="form-label">Message Type</label>
+          <label class="form-label">{{ t("sc.messageType") }}</label>
           <select v-model="form.type">
             <option value="text">Text</option>
             <option value="image">Image</option>
@@ -43,11 +43,11 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Send At</label>
+          <label class="form-label">{{ t("sc.sendAt") }}</label>
           <input v-model="form.sendAt" type="datetime-local" />
         </div>
         <div class="form-group">
-          <label class="form-label">Payload (JSON)</label>
+          <label class="form-label">{{ t("tpl.payloadJson") }}</label>
           <textarea
             v-model="form.payload"
             rows="5"
@@ -66,15 +66,15 @@
 
       <div>
         <div class="section-title">
-          Scheduled Messages ({{ scheduled.length }})
+          {{ t("sc.listTitle", { n: scheduled.length }) }}
         </div>
         <div v-if="loading" class="empty-state">
           <div class="empty-state-icon">⟳</div>
-          <div class="empty-state-text">Loading scheduled messages…</div>
+          <div class="empty-state-text">{{ t("sc.loading") }}</div>
         </div>
         <div v-else-if="scheduled.length === 0" class="empty-state">
           <div class="empty-state-icon">◷</div>
-          <div class="empty-state-text">No scheduled messages</div>
+          <div class="empty-state-text">{{ t("sc.none") }}</div>
         </div>
         <div v-else class="card" style="padding: 0; overflow: hidden">
           <table>

@@ -44,7 +44,7 @@
         border-radius: 0 0 var(--radius-lg) var(--radius-lg);
       "
     >
-      <div class="section-title">Claude Desktop Configuration</div>
+      <div class="section-title">{{ t("mcp.claudeDesktop") }}</div>
       <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px">
         Add to
         <code style="font-family: var(--font-mono); color: var(--accent)"
@@ -70,7 +70,7 @@
         border-radius: 0 0 var(--radius-lg) var(--radius-lg);
       "
     >
-      <div class="section-title">Claude Code / MCP CLI</div>
+      <div class="section-title">{{ t("mcp.claudeCode") }}</div>
       <div class="code-block">{{ claudeCodeCmd }}</div>
       <button
         class="btn-secondary"
@@ -90,7 +90,7 @@
         border-radius: 0 0 var(--radius-lg) var(--radius-lg);
       "
     >
-      <div class="section-title">Generic MCP Config</div>
+      <div class="section-title">{{ t("mcp.genericConfig") }}</div>
       <div class="code-block">{{ genericConfig }}</div>
       <button
         class="btn-secondary"
@@ -113,7 +113,7 @@
     </div>
 
     <div class="card" style="margin-top: 24px">
-      <div class="section-title">Live Tool Tester</div>
+      <div class="section-title">{{ t("mcp.tester") }}</div>
       <div class="form-group">
         <label class="form-label">Session</label>
         <select v-model="tester.session" style="max-width: 240px">
@@ -121,7 +121,7 @@
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Tool</label>
+        <label class="form-label">{{ t("mcp.tool") }}</label>
         <select v-model="tester.tool" style="max-width: 240px">
           <option v-for="t in tools" :key="t.name" :value="t">
             {{ t.name }}
@@ -129,7 +129,7 @@
         </select>
       </div>
       <div v-if="tester.tool" class="form-group">
-        <label class="form-label">Parameters (JSON)</label>
+        <label class="form-label">{{ t("mcp.paramsJson") }}</label>
         <textarea
           v-model="tester.params"
           rows="4"

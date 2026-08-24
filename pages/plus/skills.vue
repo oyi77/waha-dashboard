@@ -172,7 +172,7 @@
 
     <!-- How to Install -->
     <div class="card" style="margin-bottom: 24px">
-      <div class="section-title">How to Install</div>
+      <div class="section-title">{{ t("sk.howInstall") }}</div>
       <div
         style="
           display: flex;
@@ -231,7 +231,7 @@
 
     <!-- Alternative: MCP Connection -->
     <div class="card">
-      <div class="section-title">Alternative: WAHA MCP Connection</div>
+      <div class="section-title">{{ t("sk.mcpAlt") }}</div>
       <p
         style="
           font-size: 13px;
