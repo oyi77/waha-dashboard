@@ -17,31 +17,31 @@
        <div
          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap"
        >
-         <button class="btn-ghost" @click="loadSessions">⟳ Refresh</button>
+         <button class="btn-ghost" @click="loadSessions">{{ t("action.refresh") }}</button>
          <button
            class="btn-secondary"
            :disabled="failedCount === 0"
            @click="recoverAll"
            title="Automatically recover and restart all failed sessions"
          >
-           🔄 Recover Failed ({{ failedCount }})
+           {{ t("action.recoverFailed") }} ({{ failedCount }})
          </button>
          <button
            class="btn-secondary"
            :disabled="stoppedCount === 0"
            @click="startAllStopped"
          >
-           ▶ Start All ({{ stoppedCount }})
+           {{ t("action.startAll") }} ({{ stoppedCount }})
          </button>
          <button
            class="btn-ghost"
            :disabled="workingCount === 0"
            @click="stopAllWorking"
          >
-           ⏹ Stop All ({{ workingCount }})
+           {{ t("action.stopAll") }} ({{ workingCount }})
          </button>
          <button class="btn-primary" @click="showCreate = true">
-           + New Session
+           {{ t("action.newSession") }}
          </button>
        </div>
     </div>
@@ -49,23 +49,23 @@
     <!-- Stat Cards -->
     <div class="grid-5 stagger" style="margin-bottom: 24px">
       <div class="stat-card card">
-        <div class="stat-label">Total</div>
+        <div class="stat-label">{{ t("stat.total") }}</div>
         <div class="stat-value">{{ sessions.length }}</div>
       </div>
       <div class="stat-card card">
-        <div class="stat-label">Working</div>
+        <div class="stat-label">{{ t("stat.working") }}</div>
         <div class="stat-value stat-working">{{ workingCount }}</div>
       </div>
       <div class="stat-card card">
-        <div class="stat-label">Failed</div>
+        <div class="stat-label">{{ t("stat.failed") }}</div>
         <div class="stat-value stat-failed">{{ failedCount }}</div>
       </div>
       <div class="stat-card card">
-        <div class="stat-label">Stopped</div>
+        <div class="stat-label">{{ t("stat.stopped") }}</div>
         <div class="stat-value stat-stopped">{{ stoppedCount }}</div>
       </div>
       <div class="stat-card card">
-        <div class="stat-label">Scan QR</div>
+        <div class="stat-label">{{ t("stat.scanQr") }}</div>
         <div class="stat-value stat-scan">{{ scanQrCount }}</div>
       </div>
     </div>
@@ -475,6 +475,7 @@ interface ConfirmAction {
 
 const { get, post, put, del } = useWahaApi();
 const { success, error } = useToast();
+const { t } = useLocale();
 
 const sessions = ref<Session[]>([]);
 const engines = ref<string[]>([]);
@@ -1030,8 +1031,7 @@ const quotaPercent = computed(() => {
 });
 
 // ---- Realtime (WS session.status overlay) ----
-const { applyTo: applyLiveStatuses, ensureConnected } = useWahaRealtime();
-
+const { applyTo: applyLiveStatuses, ensureConnected, connected } = useWahaRealtime();
 // ---- Modal helpers ----
 function closeModal() {
   showCreate.value = false;
@@ -1057,16 +1057,29 @@ async function recoverAll() {
 }
 
 // ---- Poll ----
-let pollTimer: ReturnType<typeof setInterval> | null = null;
+// WS delivers live statuses; polling refreshes richer fields (me, engine).
+// Poll fast when realtime is down, slow when it is feeding us updates.
+let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
+function pollIntervalMs(): number {
+  return connected.value ? 15_000 : 3_000;
+}
+
+function schedulePoll() {
+  pollTimer = setTimeout(async () => {
+    await loadSessions();
+    schedulePoll();
+  }, pollIntervalMs());
+}
 
 function startPolling() {
-  // ✅ IMPROVED: Poll every 3 seconds instead of 10 (3x faster feedback)
-  pollTimer = setInterval(loadSessions, 3000);
+  stopPolling();
+  schedulePoll();
 }
 
 function stopPolling() {
   if (pollTimer) {
-    clearInterval(pollTimer);
+    clearTimeout(pollTimer);
     pollTimer = null;
   }
 }

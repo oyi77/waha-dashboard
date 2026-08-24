@@ -78,6 +78,11 @@
           <span>☰</span>
         </button>
         <span class="topbar-title">{{ pageTitle }}</span>
+        <span
+          class="ws-indicator"
+          :class="{ live: rtConnected }"
+          :title="rtConnected ? 'Realtime connected' : 'Realtime offline — polling'"
+        />
         <div class="topbar-spacer" />
         <button
           class="topbar-link theme-toggle"
@@ -110,16 +115,15 @@
       </main>
     </div>
 
-    <div v-if="sidebarOpen" class="sidebar-overlay" @click="closeSidebar" />
-
     <WahaToasts />
-  </div>
+    </div>
 </template>
 
 <script setup lang="ts">
 const route = useRoute();
 const { t, locale, toggleLocale } = useLocale();
 
+const { connected: rtConnected, ensureConnected: rtEnsure } = useWahaRealtime();
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
   "/Sessions": "Sessions",
@@ -174,6 +178,7 @@ onMounted(() => {
     isDark.value = saved === "dark";
   }
   applyTheme();
+  rtEnsure();
   const { setLocale } = useLocale();
   const savedLocale = localStorage.getItem("waha_locale");
   if (savedLocale === "id" || savedLocale === "en") {
@@ -341,6 +346,7 @@ onMounted(() => {
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    transition: transform 0.25s ease;
   }
 
   .sidebar.open {
@@ -365,6 +371,22 @@ onMounted(() => {
     z-index: 150;
   }
 }
+
+.ws-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  display: inline-block;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.ws-indicator.live {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+
 .theme-toggle {
   background: none;
   border: none;
