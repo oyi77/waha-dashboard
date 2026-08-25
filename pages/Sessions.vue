@@ -22,7 +22,7 @@
            class="btn-secondary"
            :disabled="failedCount === 0"
            @click="recoverAll"
-           title="Automatically recover and restart all failed sessions"
+          :title="t('tooltip.recoverFailed')"
          >
            {{ t("action.recoverFailed") }} ({{ failedCount }})
          </button>
@@ -144,7 +144,7 @@
           <label class="session-checkbox" @click.stop>
             <input
               type="checkbox"
-              :aria-label="`Select session ${session.name}`"
+              :aria-label="t('tooltip.selectSession', { name: session.name })"
               :checked="selected.has(session.name)"
               @change="toggleSelect(session.name)"
             />
@@ -187,8 +187,8 @@
           <button
             v-if="session.status === 'FAILED'"
             class="action-btn action-restart"
-            title="Restart session"
-            aria-label="Restart session"
+            :title="t('tooltip.restart')"
+            :aria-label="t('tooltip.restart')"
             @click="confirmStart(session.name)"
           >
             {{ t("action.restart") }}
@@ -196,8 +196,8 @@
           <button
             v-if="session.status === 'STOPPED'"
             class="action-btn action-start"
-            title="Start session"
-            aria-label="Start session"
+            :title="t('tooltip.start')"
+            :aria-label="t('tooltip.start')"
             @click="confirmStart(session.name)"
           >
             {{ t("action.start") }}
@@ -205,8 +205,8 @@
           <button
             v-if="session.status === 'WORKING'"
             class="action-btn action-restart"
-            title="Restart session"
-            aria-label="Restart session"
+            :title="t('tooltip.restart')"
+            :aria-label="t('tooltip.restart')"
             @click="confirmRestart(session.name)"
           >
             {{ t("action.restart") }}
@@ -214,8 +214,8 @@
           <button
             v-if="session.status === 'WORKING'"
             class="action-btn action-settings"
-            title="Timelock & message quota"
-            aria-label="Account status"
+            :title="t('tooltip.timelockQuota')"
+            :aria-label="t('tooltip.accountStatus')"
             @click="openAccountStatus(session.name)"
           >
             {{ t("action.accountStatus") }}
@@ -223,24 +223,24 @@
           <button
             v-if="session.status === 'SCAN_QR_CODE'"
             class="action-btn action-qr"
-            title="Scan QR Code"
-            aria-label="Scan QR Code"
+            :title="t('tooltip.scanQr')"
+            :aria-label="t('tooltip.scanQr')"
             @click="openQr(session.name)"
           >
             {{ t("action.scanQr") }}
           </button>
           <button
             class="action-btn action-settings"
-            title="Session settings"
-            aria-label="Session settings"
+            :title="t('tooltip.settings')"
+            :aria-label="t('tooltip.settings')"
             @click="editSession(session)"
           >
             {{ t("action.settings") }}
           </button>
           <button
             class="action-btn action-delete"
-            title="Delete session"
-            aria-label="Delete session"
+            :title="t('tooltip.delete')"
+            :aria-label="t('tooltip.delete')"
             @click="confirmDelete(session.name)"
           >
             {{ t("action.delete") }}
