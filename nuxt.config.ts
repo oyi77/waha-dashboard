@@ -42,6 +42,20 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/main.css"],
 
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          // Stable vendor chunk so app-code deploys don't invalidate the
+          // framework cache for returning browsers.
+          manualChunks: {
+            vendor: ["vue", "vue-router"],
+          },
+        },
+      },
+    },
+  },
+
   nitro: {
     preset: "static",
   },

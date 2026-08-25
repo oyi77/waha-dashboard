@@ -35,6 +35,12 @@ npm test
 
 The dashboard connects to WAHA via the REST API using same-origin requests — it is served by WAHA itself under `/dashboard` (the production image builds this repo at the ref pinned in waha-core's `waha.config.json`).
 
+## Performance Decisions
+
+- **Vendor chunk splitting** — `vite.build.rollupOptions.output.manualChunks` pins `vue`/`vue-router` into a stable `vendor` chunk so app-code deploys don't invalidate the framework cache for returning browsers.
+- **Google Fonts kept remote** (DM Sans / DM Mono) with `preconnect` + `display=swap`; self-hosting was considered and deferred — the dashboard is behind auth, traffic is tiny (3 operators), and remote fonts keep the repo lean.
+- **PWA is manifest-only by design** — no service worker. A SW caching an auth-gated SPA risks serving stale sessions after credential rotation; installability comes from the manifest alone.
+
 ## Architecture Notes
 
 - **Nuxt 3, static preset** (`ssr: false`) — prerendered SPA served by WAHA's ServeStaticModule under `/dashboard`
