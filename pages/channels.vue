@@ -5,7 +5,7 @@
         <div class="page-title">{{ t("ch.title") }}</div>
         <div class="page-subtitle">{{ t("ch.subtitle") }}</div>
       </div>
-      <select v-model="sessionName" class="session-select" aria-label="Session">
+      <select v-model="sessionName" class="session-select" :aria-label="t('ak.session')">
         <option value="" disabled>{{ t("ch.pickSession") }}</option>
         <option v-for="s in workingSessions" :key="s" :value="s">{{ s }}</option>
       </select>
@@ -51,16 +51,16 @@
             <template #actions>
               <button
                 class="btn-ghost"
-                :title="muted.has(ch.id) ? 'Unmute channel' : 'Mute channel'"
+                :title="muted.has(ch.id) ? t('ch.unmuteTip') : t('ch.muteTip')"
                 @click.stop="toggleMute(ch)"
               >
-                {{ muted.has(ch.id) ? "🔔 Unmute" : "🔕 Mute" }}
+                {{ muted.has(ch.id) ? t("ch.unmuteBtn") : t("ch.muteBtn") }}
               </button>
               <button
                 class="btn-danger"
                 @click.stop="confirmUnfollow(ch)"
               >
-                ✕ Unfollow
+                {{ t("ch.unfollowBtn") }}
               </button>
             </template>
           </ChannelCard>
@@ -97,20 +97,20 @@
           </div>
 
           <div v-else class="discover-row">
-            <select v-model="searchView" aria-label="View">
-              <option value="" disabled>— view —</option>
+            <select v-model="searchView" :aria-label="t('ch.ariaView')">
+              <option value="" disabled>{{ t("ch.pickView") }}</option>
               <option v-for="v in views" :key="v.value" :value="v.value">
                 {{ v.name }}
               </option>
             </select>
-            <select v-model="searchCountry" aria-label="Country">
-              <option value="">🌍 Any country</option>
+            <select v-model="searchCountry" :aria-label="t('ch.ariaCountry')">
+              <option value="">{{ t("ch.anyCountry") }}</option>
               <option v-for="c in countries" :key="c.code" :value="c.code">
                 {{ c.name }}
               </option>
             </select>
-            <select v-model="searchCategory" aria-label="Category">
-              <option value="">🗂 Any category</option>
+            <select v-model="searchCategory" :aria-label="t('ch.ariaCategory')">
+              <option value="">{{ t("ch.anyCategory") }}</option>
               <option v-for="c in categories" :key="c.value" :value="c.value">
                 {{ c.name }}
               </option>
@@ -141,7 +141,7 @@
                 :disabled="following === ch.id"
                 @click.stop="followChannel(ch)"
               >
-                {{ following === ch.id ? "⟳ ..." : "+ Follow" }}
+                {{ following === ch.id ? t("ch.following") : t("ch.followBtn") }}
               </button>
             </template>
           </ChannelCard>
@@ -179,7 +179,7 @@
               {{ t("action.cancel") }}
             </button>
             <button class="btn-danger" style="flex: 1" @click="doUnfollow">
-              ✕ Unfollow
+              {{ t("ch.unfollowBtn") }}
             </button>
           </div>
         </div>
@@ -198,10 +198,10 @@
             <span v-if="previewChannel.verified" style="color: var(--info)">✓</span>
           </div>
           <div v-if="previewLoading" class="empty-state-text" style="padding: 24px 0">
-            ⟳ Loading messages...
+            {{ t("ch.loadingMessages") }}
           </div>
           <div v-else-if="previewMessages.length === 0" class="status-empty">
-            No recent messages available.
+            {{ t("ch.noMessages") }}
           </div>
           <div v-else class="preview-list">
             <div
@@ -222,7 +222,7 @@
             style="margin-top: 16px; width: 100%"
             @click="previewChannel = null"
           >
-            Close
+            {{ t("action.close") }}
           </button>
         </div>
       </div>
@@ -332,7 +332,7 @@ async function loadMine() {
       `/api/${sessionName.value}/channels`,
     );
   } catch (e) {
-    error("Failed to load channels: " + extractApiError(e));
+    error(t("ch.loadFail") + extractApiError(e));
   } finally {
     loading.value = false;
   }
@@ -421,7 +421,7 @@ async function openPreview(ch: Channel) {
       `/api/${sessionName.value}/channels/${encodeURIComponent(idOrCode)}/messages/preview?limit=10`,
     );
     previewMessages.value = (msgs ?? []).map((m) => ({
-      text: extractMessageText(m.message) || "(media message)",
+      text: extractMessageText(m.message) || t("ch.mediaMsg"),
       timestamp: m.message?.messageTimestamp ?? null,
       viewCount: m.viewCount ?? 0,
       reactions: m.reactions ?? {},

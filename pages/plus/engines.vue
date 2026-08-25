@@ -9,7 +9,7 @@
         <div class="page-subtitle">{{ t("plus.engines.subtitle") }}</div>
       </div>
       <div>
-        <button class="btn-ghost" @click="loadSessions">⟳ Refresh</button>
+        <button class="btn-ghost" @click="loadSessions">{{ t("action.refresh") }}</button>
       </div>
     </div>
 
@@ -44,27 +44,27 @@
           <span class="badge" :class="`engine-${eng.name.toLowerCase()}`">{{
             eng.name
           }}</span>
-          <span v-if="eng.recommended" class="badge badge-working"
-            >Recommended</span
-          >
+          <span v-if="eng.recommended" class="badge badge-working">{{
+            t("eg.recommended")
+          }}</span>
         </div>
         <div
           class="engine-tagline"
           style="color: var(--text); font-weight: 500"
         >
-          {{ eng.description || eng.tagline || "Engine capability" }}
+          {{ eng.description || eng.tagline || t("eg.capability") }}
         </div>
         <button
           class="btn-secondary"
           style="width: 100%; margin-top: auto"
           @click="openCreate(eng.name)"
         >
-          Create Session
+          {{ t("eg.createSession") }}
         </button>
       </div>
     </div>
 
-    <div class="section-title" style="margin-top: 32px">Active Sessions</div>
+    <div class="section-title" style="margin-top: 32px">{{ t("eg.activeSessions") }}</div>
     <div v-if="sessions.length === 0" class="empty-state">
       <div class="empty-state-text">{{ t("eg.noSessions") }}</div>
     </div>
@@ -130,19 +130,19 @@
               >
             </div>
             <button class="btn-ghost" @click="openSwitchEngine(s)">
-              Switch
+              {{ t("workers.switch") }}
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="section-title" style="margin-top: 32px">Comparison</div>
+    <div class="section-title" style="margin-top: 32px">{{ t("eg.comparison") }}</div>
     <div class="card" style="padding: 0; overflow: hidden; overflow-x: auto">
       <table>
         <thead>
           <tr>
-            <th>Feature</th>
+            <th>{{ t("eg.feature") }}</th>
             <th v-for="eng in fallbackEngines" :key="eng.name">
               <span class="badge" :class="`engine-${eng.name.toLowerCase()}`">{{
                 eng.name
@@ -190,7 +190,7 @@
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px">
           <button class="btn-ghost" style="flex: 1" @click="showCreate = false">
-            Cancel
+            {{ t("action.cancel") }}
           </button>
           <button
             class="btn-primary"
@@ -198,7 +198,7 @@
             @click="createSession"
             :disabled="isCreating"
           >
-            {{ isCreating ? "Creating..." : "Create" }}
+            {{ isCreating ? t("action.creating") : t("action.create") }}
           </button>
         </div>
       </div>
@@ -227,7 +227,7 @@
             >
               {{ resolveEngine(sessionToSwitch?.engine) }}
             </span>
-            <span v-else style="color: var(--text-dim)">Unknown</span>
+            <span v-else style="color: var(--text-dim)">{{ t("eg.unknown") }}</span>
           </div>
 
           <label class="form-label">{{ t("eg.newEngine") }}</label>
@@ -243,7 +243,7 @@
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px">
           <button class="btn-ghost" style="flex: 1" @click="closeSwitchEngine">
-            Cancel
+            {{ t("action.cancel") }}
           </button>
           <button
             class="btn-primary"
@@ -254,7 +254,7 @@
               switchForm.engine === resolveEngine(sessionToSwitch?.engine)
             "
           >
-            {{ isSwitching ? "Switching..." : "Switch" }}
+            {{ isSwitching ? t("workers.switching") : t("workers.switch") }}
           </button>
         </div>
       </div>
@@ -289,57 +289,54 @@ interface EngineCapability {
 const { get, post } = useWahaApi();
 const { success, error } = useToast();
 
-const fallbackEngines: EngineCapability[] = [
+const fallbackEngines = computed<EngineCapability[]>(() => [
   {
     name: "NOWEB",
-    description:
-      "Lightweight, no browser required. Best for cloud/VPS. Low memory.",
+    description: t("eg.desc.NOWEB"),
     recommended: true,
   },
   {
     name: "WEBJS",
-    description:
-      "Chromium-based, battle-tested. High compatibility, mature ecosystem.",
+    description: t("eg.desc.WEBJS"),
   },
   {
     name: "WPP",
-    description:
-      "WPPConnect-based engine. Chromium-based with extra API surface.",
+    description: t("eg.desc.WPP"),
   },
   {
     name: "GOWS",
-    description: "Go-based, experimental. Minimal footprint, fast startup.",
+    description: t("eg.desc.GOWS"),
   },
-];
+]);
 
-const comparisonRows: Record<string, unknown>[] = [
-  { feature: "No Chromium", NOWEB: true, WEBJS: false, WPP: false, GOWS: true },
+const comparisonRows = computed<Record<string, unknown>[]>(() => [
+  { feature: t("eg.row.noChromium"), NOWEB: true, WEBJS: false, WPP: false, GOWS: true },
   {
-    feature: "Memory usage",
-    NOWEB: "Low",
-    WEBJS: "High",
-    WPP: "High",
-    GOWS: "Very Low",
+    feature: t("eg.row.memory"),
+    NOWEB: t("eg.val.low"),
+    WEBJS: t("eg.val.high"),
+    WPP: t("eg.val.high"),
+    GOWS: t("eg.val.veryLow"),
   },
   {
-    feature: "Stability",
-    NOWEB: "High",
-    WEBJS: "Very High",
-    WPP: "Medium",
-    GOWS: "Experimental",
+    feature: t("eg.row.stability"),
+    NOWEB: t("eg.val.high"),
+    WEBJS: t("eg.val.veryHigh"),
+    WPP: t("eg.val.medium"),
+    GOWS: t("eg.val.experimental"),
   },
-  { feature: "Multi-device", NOWEB: true, WEBJS: true, WPP: true, GOWS: true },
+  { feature: t("eg.row.multiDevice"), NOWEB: true, WEBJS: true, WPP: true, GOWS: true },
   {
-    feature: "Voice calls",
+    feature: t("eg.row.voiceCalls"),
     NOWEB: false,
     WEBJS: false,
     WPP: false,
     GOWS: false,
   },
-  { feature: "Status", NOWEB: "✓", WEBJS: "✓", WPP: "✓", GOWS: "✓" },
-  { feature: "Polls", NOWEB: true, WEBJS: false, WPP: false, GOWS: true },
-  { feature: "Reactions", NOWEB: true, WEBJS: true, WPP: true, GOWS: true },
-];
+  { feature: t("eg.row.status"), NOWEB: "✓", WEBJS: "✓", WPP: "✓", GOWS: "✓" },
+  { feature: t("eg.row.polls"), NOWEB: true, WEBJS: false, WPP: false, GOWS: true },
+  { feature: t("eg.row.reactions"), NOWEB: true, WEBJS: true, WPP: true, GOWS: true },
+]);
 
 const loadingEngines = ref(true);
 const engineCards = ref<EngineCapability[]>([]);
@@ -381,11 +378,11 @@ async function loadEngines() {
     if (Array.isArray(data) && data.length > 0) {
       engineCards.value = data;
     } else {
-      engineCards.value = fallbackEngines;
+      engineCards.value = fallbackEngines.value;
     }
   } catch (e) {
-    engineCards.value = fallbackEngines;
-    error("Failed to load engine info — showing defaults: " + extractApiError(e));
+    engineCards.value = fallbackEngines.value;
+    error(t("eg.loadInfoFail") + extractApiError(e));
   } finally {
     loadingEngines.value = false;
   }
@@ -429,11 +426,11 @@ async function createSession() {
       name: createForm.name || "default",
       engine: createForm.engine,
     });
-    success("Session created");
+    success(t("toast.created"));
     showCreate.value = false;
     await loadSessions();
   } catch (e) {
-    error("Failed to create session: " + extractApiError(e));
+    error(t("toast.createFail") + extractApiError(e));
   } finally {
     isCreating.value = false;
   }
@@ -441,7 +438,8 @@ async function createSession() {
 
 function openSwitchEngine(session: Session) {
   sessionToSwitch.value = session;
-  switchForm.engine = resolveEngine(session.engine) || fallbackEngines[0].name;
+  switchForm.engine =
+    resolveEngine(session.engine) || fallbackEngines.value[0].name;
   showSwitch.value = true;
 }
 
@@ -463,11 +461,11 @@ async function switchEngine() {
     await post(`/api/sessions/${sessionToSwitch.value.name}/switch-engine`, {
       engine: switchForm.engine,
     });
-    success(`Successfully switched engine for ${sessionToSwitch.value.name}`);
+    success(t("wk.switched", { name: sessionToSwitch.value.name }));
     showSwitch.value = false;
     await loadSessions();
   } catch (e) {
-    error("Failed to switch engine: " + extractApiError(e));
+    error(t("wk.switchFail") + extractApiError(e));
   } finally {
     isSwitching.value = false;
   }

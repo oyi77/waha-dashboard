@@ -8,7 +8,7 @@
     <div class="layout-grid">
       <div>
         <div class="card">
-          <div class="section-title">Upload CSV</div>
+          <div class="section-title">{{ t("ct.uploadTitle") }}</div>
           <div
             class="drop-zone"
             :class="{ 'drop-zone-active': dragOver }"
@@ -18,8 +18,8 @@
             @click="fileInput?.click()"
           >
             <div class="drop-icon">⬆</div>
-            <div class="drop-text">Drop CSV or click to browse</div>
-            <div class="drop-hint">One phone number per line (no header)</div>
+            <div class="drop-text">{{ t("ct.dropText") }}</div>
+            <div class="drop-hint">{{ t("ct.dropHint") }}</div>
           </div>
           <input
             ref="fileInput"
@@ -42,7 +42,7 @@
         </div>
 
         <div class="card" style="margin-top: 16px">
-          <div class="section-title">Bulk Check</div>
+          <div class="section-title">{{ t("ct.bulkCheck") }}</div>
           <div class="form-group">
             <label class="form-label">{{ t("ak.session") }}</label>
             <select v-model="session">
@@ -56,7 +56,7 @@
             :disabled="!session || preview.length === 0 || checking"
             @click="checkContacts"
           >
-            {{ checking ? "Checking…" : `Check ${preview.length} Numbers` }}
+            {{ checking ? t("ct.checking") : t("ct.checkN", { n: preview.length }) }}
           </button>
         </div>
       </div>
@@ -78,10 +78,10 @@
             "
           >
             <div class="section-title" style="margin-bottom: 0">
-              Results — {{ validCount }} valid / {{ results.length }} total
+              {{ t("ct.results", { valid: validCount, total: results.length }) }}
             </div>
             <button class="btn-secondary" @click="exportCsv">
-              ↓ Export Valid
+              {{ t("ct.exportValid") }}
             </button>
           </div>
           <div
@@ -96,9 +96,9 @@
             <table>
               <thead>
                 <tr>
-                  <th>Number</th>
-                  <th>WhatsApp ID</th>
-                  <th>Status</th>
+                  <th>{{ t("ct.number") }}</th>
+                  <th>{{ t("ct.waId") }}</th>
+                  <th>{{ t("ct.status") }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,7 +120,7 @@
                       class="badge"
                       :class="r.valid ? 'badge-working' : 'badge-stopped'"
                     >
-                      {{ r.valid ? "✓ Valid" : "✕ Invalid" }}
+                      {{ r.valid ? t("ct.valid") : t("ct.invalid") }}
                     </span>
                   </td>
                 </tr>
@@ -162,7 +162,7 @@ async function loadSessions() {
       session.value = sessions.value[0];
     }
   } catch (e) {
-    error("Failed to load sessions: " + extractApiError(e));
+    error(t("toast.loadSessionsFail") + extractApiError(e));
   }
 }
 
@@ -189,14 +189,14 @@ function readFile(file: File) {
   reader.onload = (e) => {
     const result = e.target?.result;
     if (typeof result !== "string") {
-      error("Could not read file — please upload a plain text or CSV file");
+      error(t("ct.readPlainFail"));
       return;
     }
     preview.value = parseNumbers(result);
     results.value = [];
   };
   reader.onerror = () => {
-    error("Failed to read file");
+    error(t("ct.readFail"));
   };
   reader.readAsText(file);
 }
@@ -211,9 +211,9 @@ async function checkContacts() {
       numbers: preview.value,
     });
     results.value = data;
-    success(`Checked ${data.length} numbers — ${validCount.value} valid`);
+    success(t("ct.checkedOk", { n: data.length, valid: validCount.value }));
   } catch (e) {
-    error("Failed to check contacts: " + extractApiError(e));
+    error(t("ct.checkFail") + extractApiError(e));
   } finally {
     checking.value = false;
   }

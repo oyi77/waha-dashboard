@@ -2,48 +2,48 @@
   <div class="page-wrapper">
     <div class="page-header">
       <div>
-        <div class="page-title">⊞ Dashboard</div>
-        <div class="page-subtitle">WAHA Core — session overview</div>
+        <div class="page-title">{{ t("dash.title") }}</div>
+        <div class="page-subtitle">{{ t("dash.subtitle") }}</div>
       </div>
     </div>
 
     <!-- Stat cards -->
     <div class="grid-4 stagger" style="margin-bottom: 32px">
       <div class="stat-card card">
-        <div class="stat-card-label">Total Sessions</div>
+        <div class="stat-card-label">{{ t("workers.totalSessions") }}</div>
         <div class="stat-card-value">{{ sessions.length }}</div>
       </div>
       <div class="stat-card card">
-        <div class="stat-card-label">Working</div>
+        <div class="stat-card-label">{{ t("stat.working") }}</div>
         <div class="stat-card-value" style="color: var(--accent)">
           {{ workingCount }}
         </div>
       </div>
       <div class="stat-card card">
-        <div class="stat-card-label">Stopped</div>
+        <div class="stat-card-label">{{ t("stat.stopped") }}</div>
         <div class="stat-card-value" style="color: var(--text-dim)">
           {{ stoppedCount }}
         </div>
       </div>
       <div class="stat-card card">
-        <div class="stat-card-label">Failed</div>
+        <div class="stat-card-label">{{ t("stat.failed") }}</div>
         <div class="stat-card-value" style="color: #ef4444">
           {{ failedCount }}
         </div>
       </div>
     </div>
 
-    <div class="section-title" style="margin-bottom: 16px">Sessions</div>
+    <div class="section-title" style="margin-bottom: 16px">{{ t("nav.sessions") }}</div>
 
     <div v-if="loading && sessions.length === 0" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading dashboard…</div>
+      <div class="empty-state-text">{{ t("dash.loading") }}</div>
     </div>
 
     <div v-else-if="sessions.length === 0" class="empty-state">
       <div class="empty-state-icon">◎</div>
       <div class="empty-state-text">
-        No sessions yet. Go to Sessions to create one.
+        {{ t("dash.noSessions") }}
       </div>
     </div>
 
@@ -93,6 +93,7 @@ interface Session {
 }
 
 const { get } = useWahaApi();
+const { t } = useLocale();
 const { error } = useToast();
 
 const sessions = ref<Session[]>([]);
@@ -128,7 +129,7 @@ async function loadSessions() {
     const data = await get<Session[]>("/api/sessions?all=true");
     sessions.value = data;
   } catch (e) {
-    error("Failed to load dashboard data: " + extractApiError(e));
+    error(t("toast.loadDashFail") + extractApiError(e));
   } finally {
     loading.value = false;
   }

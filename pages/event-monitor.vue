@@ -41,7 +41,7 @@
           <span class="dot yellow"></span>
           <span class="dot green"></span>
         </div>
-        <div class="terminal-title">bash — WAHA Event Stream</div>
+        <div class="terminal-title">{{ t("em.terminalTitle") }}</div>
       </div>
       <div class="terminal-body font-mono" ref="terminalBody">
         <div v-if="showReconnectButton" class="terminal-empty">
@@ -172,7 +172,7 @@ async function connect() {
       // Let onclose handle the reconnect
     };
   } catch (err) {
-    error("Failed to initialize WebSocket");
+    error(t("toast.wsInitFail"));
     if (!unmounted) scheduleReconnect();
   }
 }

@@ -7,53 +7,53 @@
 
     <div class="filter-bar">
       <select v-model="filterSession" class="filter-select" @change="loadData">
-        <option value="">All Sessions</option>
+        <option value="">{{ t("an.allSessions") }}</option>
         <option v-for="s in sessions" :key="s" :value="s">{{ s }}</option>
       </select>
       <select v-model="filterRange" class="filter-select" @change="loadData">
-        <option value="7">Last 7 days</option>
-        <option value="30">Last 30 days</option>
-        <option value="90">Last 90 days</option>
+        <option value="7">{{ t("an.range7") }}</option>
+        <option value="30">{{ t("an.range30") }}</option>
+        <option value="90">{{ t("an.range90") }}</option>
       </select>
     </div>
 
     <div v-if="loading" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading analytics…</div>
+      <div class="empty-state-text">{{ t("an.loading") }}</div>
     </div>
 
     <div v-else class="grid-4 stagger" style="margin-bottom: 28px">
       <div class="stat-card">
         <div class="stat-card-value">{{ summary.totalSent }}</div>
-        <div class="stat-card-label">Sent</div>
+        <div class="stat-card-label">{{ t("an.sent") }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-value">{{ summary.totalReceived }}</div>
-        <div class="stat-card-label">Received</div>
+        <div class="stat-card-label">{{ t("an.received") }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-value">{{ summary.activeSessions }}</div>
-        <div class="stat-card-label">Active Sessions</div>
+        <div class="stat-card-label">{{ t("an.activeSessions") }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-value">{{ summary.totalMessages }}</div>
-        <div class="stat-card-label">Total Messages</div>
+        <div class="stat-card-label">{{ t("an.totalMessages") }}</div>
       </div>
     </div>
 
     <div class="card" style="margin-bottom: 24px">
-      <div class="section-title">Daily Activity</div>
+      <div class="section-title">{{ t("an.dailyActivity") }}</div>
       <div
         v-if="chartData.length === 0"
         class="empty-state"
         style="padding: 32px"
       >
-        <div class="empty-state-text">No chart data</div>
+        <div class="empty-state-text">{{ t("an.noChartData") }}</div>
       </div>
       <svg
         v-else
         role="img"
-        aria-label="Daily message activity chart showing sent and received messages over time"
+        :aria-label="t('an.chartAria')"
         :viewBox="`0 0 ${chartW} ${chartH}`"
         style="width: 100%; height: 180px; display: block"
       >
@@ -100,25 +100,25 @@
         </text>
       </svg>
       <div style="display: flex; gap: 16px; margin-top: 8px">
-        <span style="font-size: 12px; color: #22c55e">▬ Sent</span>
-        <span style="font-size: 12px; color: #3b82f6">▬ Received</span>
+        <span style="font-size: 12px; color: #22c55e">▬ {{ t("an.sent") }}</span>
+        <span style="font-size: 12px; color: #3b82f6">▬ {{ t("an.received") }}</span>
       </div>
     </div>
 
-    <div class="section-title">Message Log</div>
+    <div class="section-title">{{ t("an.msgLog") }}</div>
     <div v-if="messages.length === 0" class="empty-state">
-      <div class="empty-state-text">No messages</div>
+      <div class="empty-state-text">{{ t("an.noMessages") }}</div>
     </div>
     <div v-else class="card" style="padding: 0">
       <div style="overflow-x: auto">
       <table>
         <thead>
           <tr>
-            <th>Time</th>
-            <th>Session</th>
-            <th>From</th>
-            <th>Type</th>
-            <th>Preview</th>
+            <th>{{ t("an.time") }}</th>
+            <th>{{ t("ak.session") }}</th>
+            <th>{{ t("an.from") }}</th>
+            <th>{{ t("ak.type") }}</th>
+            <th>{{ t("an.preview") }}</th>
           </tr>
         </thead>
         <tbody>
@@ -165,14 +165,14 @@
       >
         <button
           class="btn-ghost"
-          aria-label="Previous page"
+          :aria-label="t('an.prevPageAria')"
           :disabled="page === 1"
           @click="
             page--;
             loadMessages();
           "
         >
-          ← Prev
+          {{ t("an.prevBtn") }}
         </button>
         <span
           style="color: var(--text-dim); font-size: 13px; padding: 6px 12px"
@@ -180,14 +180,14 @@
         >
         <button
           class="btn-ghost"
-          aria-label="Next page"
+          :aria-label="t('an.nextPageAria')"
           :disabled="messages.length < pageSize"
           @click="
             page++;
             loadMessages();
           "
         >
-          Next →
+          {{ t("an.nextBtn") }}
         </button>
       </div>
     </div>
@@ -287,7 +287,7 @@ async function loadSessions() {
     const data = await get<{ name: string }[]>("/api/sessions?all=true");
     sessions.value = data.map((s) => s.name);
   } catch (e) {
-    error("Failed to load sessions: " + extractApiError(e));
+    error(t("toast.loadSessionsFail") + extractApiError(e));
   }
 }
 
@@ -299,7 +299,7 @@ async function loadSummary() {
     const data = await get<typeof summary>(`/api/analytics/summary?${params}`);
     Object.assign(summary, data);
   } catch (e) {
-    error("Failed to load summary: " + extractApiError(e));
+    error(t("an.loadSummaryFail") + extractApiError(e));
   } finally {
     loading.value = false;
   }
@@ -313,7 +313,7 @@ async function loadChart() {
     chartData.value = data;
   } catch (e) {
     chartData.value = [];
-    error("Failed to load chart data: " + extractApiError(e));
+    error(t("an.loadChartFail") + extractApiError(e));
   }
 }
 
@@ -327,7 +327,7 @@ async function loadMessages() {
     const data = await get<Message[]>(`/api/messages/log?${params}`);
     messages.value = data;
   } catch (e) {
-    error("Failed to load messages: " + extractApiError(e));
+    error(t("an.loadMessagesFail") + extractApiError(e));
   }
 }
 

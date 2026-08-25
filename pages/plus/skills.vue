@@ -24,7 +24,7 @@
           "
           >/waha-send</span
         >
-        <span class="badge badge-active">Send Messages</span>
+        <span class="badge badge-active">{{ t("sk.badgeSend") }}</span>
       </div>
       <p
         style="
@@ -34,8 +34,7 @@
           line-height: 1.5;
         "
       >
-        Send WhatsApp messages directly from Claude. Ask Claude to send a
-        message and it will call the WAHA API automatically.
+        {{ t("sk.sendDesc") }}
       </p>
       <div style="position: relative">
         <div
@@ -55,7 +54,7 @@
           "
           @click="copyText(skillSend, 'send')"
         >
-          {{ copied.send ? "Copied!" : "Copy" }}
+          {{ copied.send ? t("action.copied") : t("action.copy") }}
         </button>
       </div>
     </div>
@@ -79,7 +78,7 @@
           "
           >/waha-broadcast</span
         >
-        <span class="badge badge-active">Broadcast</span>
+        <span class="badge badge-active">{{ t("sk.badgeBroadcast") }}</span>
       </div>
       <p
         style="
@@ -89,8 +88,7 @@
           line-height: 1.5;
         "
       >
-        Broadcast a message to multiple WhatsApp contacts at once. Claude will
-        ask for the contact list and message, then send to all of them.
+        {{ t("sk.broadcastDesc") }}
       </p>
       <div style="position: relative">
         <div
@@ -110,7 +108,7 @@
           "
           @click="copyText(skillBroadcast, 'broadcast')"
         >
-          {{ copied.broadcast ? "Copied!" : "Copy" }}
+          {{ copied.broadcast ? t("action.copied") : t("action.copy") }}
         </button>
       </div>
     </div>
@@ -134,7 +132,7 @@
           "
           >/waha-status</span
         >
-        <span class="badge badge-active">Session Status</span>
+        <span class="badge badge-active">{{ t("sk.badgeStatus") }}</span>
       </div>
       <p
         style="
@@ -144,8 +142,7 @@
           line-height: 1.5;
         "
       >
-        Check WAHA session status and get the QR code for authentication. Claude
-        will report the session state and show the QR code URL if needed.
+        {{ t("sk.statusDesc") }}
       </p>
       <div style="position: relative">
         <div
@@ -165,7 +162,7 @@
           "
           @click="copyText(skillStatus, 'status')"
         >
-          {{ copied.status ? "Copied!" : "Copy" }}
+          {{ copied.status ? t("action.copied") : t("action.copy") }}
         </button>
       </div>
     </div>
@@ -240,12 +237,10 @@
           line-height: 1.5;
         "
       >
-        Instead of individual skills, connect Claude Code directly to WAHA via
-        MCP for full tool access. This gives Claude access to all 15 WAHA tools
-        without any skill files.
+        {{ t("sk.mcpAltDesc") }}
       </p>
       <div class="form-label" style="margin-bottom: 8px">
-        Claude Code Settings (<code
+        {{ t("sk.ccSettings") }}<code
           style="font-family: var(--font-mono); color: var(--accent)"
           >~/.claude/settings.json</code
         >)
@@ -268,7 +263,7 @@
           "
           @click="copyText(mcpConfig, 'mcp')"
         >
-          {{ copied.mcp ? "Copied!" : "Copy" }}
+          {{ copied.mcp ? t("action.copied") : t("action.copy") }}
         </button>
       </div>
       <p
@@ -278,13 +273,12 @@
           margin-top: 12px;
         "
       >
-        After adding this config, restart Claude Code. You'll see all waha_*
-        tools available automatically.
+        {{ t("sk.restartNote") }}
       </p>
       <p style="margin-top: 16px">
-        <NuxtLink to="/plus/mcp" style="color: var(--accent); font-size: 13px"
-          >→ View full MCP documentation</NuxtLink
-        >
+        <NuxtLink to="/plus/mcp" style="color: var(--accent); font-size: 13px">{{
+          t("sk.viewDocs")
+        }}</NuxtLink>
       </p>
     </div>
   </div>
@@ -433,28 +427,28 @@ const mcpConfig = computed(() => {
   );
 });
 
-const installSteps = [
+const installSteps = computed(() => [
   {
     num: 1,
-    title: "Copy a skill above",
-    desc: 'Click "Copy" on any skill definition to copy the markdown content to your clipboard.',
+    title: t("sk.step1Title"),
+    desc: t("sk.step1Desc"),
   },
   {
     num: 2,
-    title: "Create the skill file",
-    desc: `Save the copied content to <code style="font-family: var(--font-mono); font-size: 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 4px; padding: 1px 6px; color: #4ade80;">~/.claude/skills/waha-send.md</code> (or the appropriate skill name). Create the directory if it doesn't exist: <code style="font-family: var(--font-mono); font-size: 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 4px; padding: 1px 6px; color: #4ade80;">mkdir -p ~/.claude/skills</code>`,
+    title: t("sk.step2Title"),
+    desc: t("sk.step2Desc"),
   },
   {
     num: 3,
-    title: "Set your WAHA URL",
-    desc: `Update the <code style="font-family: var(--font-mono); font-size: 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 4px; padding: 1px 6px; color: #4ade80;">WAHA_URL</code> and <code style="font-family: var(--font-mono); font-size: 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 4px; padding: 1px 6px; color: #4ade80;">API_KEY</code> placeholders in the skill file with your actual WAHA instance URL and API key.`,
+    title: t("sk.step3Title"),
+    desc: t("sk.step3Desc"),
   },
   {
     num: 4,
-    title: "Use in Claude Code",
-    desc: `Run <code style="font-family: var(--font-mono); font-size: 12px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 4px; padding: 1px 6px; color: #4ade80;">/waha-send</code> in Claude Code to invoke the skill. Claude will ask for the required details and send the message.`,
+    title: t("sk.step4Title"),
+    desc: t("sk.step4Desc"),
   },
-];
+]);
 
 async function copyText(text: string, key: string) {
   try {
@@ -464,9 +458,21 @@ async function copyText(text: string, key: string) {
       copied[key] = false;
     }, 1500);
   } catch (e) {
-    error("Failed to copy to clipboard: " + extractApiError(e));
+    error(t("toast.copyFail") + extractApiError(e));
   }
 }
 
 onMounted(() => init());
 </script>
+
+<style scoped>
+.sk-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: #4ade80;
+}
+</style>

@@ -2,8 +2,8 @@
   <div class="page-wrapper">
     <div class="page-header">
       <div>
-        <div class="page-title">⚙ Settings</div>
-        <div class="page-subtitle">WAHA configuration and preferences</div>
+        <div class="page-title">{{ t("settings.title") }}</div>
+        <div class="page-subtitle">{{ t("settings.subtitle") }}</div>
       </div>
     </div>
 
@@ -15,41 +15,42 @@
           {{ t("settings.sessionHealth") }}
         </div>
         <div v-if="healthLoading" class="health-loading">
-          Loading health data...
+          {{ t("st.loadingHealth") }}
         </div>
         <div v-else-if="healthData" class="health-grid">
           <div class="health-card health-total">
             <div class="health-value">{{ healthData.total }}</div>
-            <div class="health-label">Total</div>
+            <div class="health-label">{{ t("stat.total") }}</div>
           </div>
           <div class="health-card health-working">
             <div class="health-value">{{ healthData.working }}</div>
-            <div class="health-label">Working</div>
+            <div class="health-label">{{ t("stat.working") }}</div>
           </div>
           <div class="health-card health-failed">
             <div class="health-value">{{ healthData.failed }}</div>
-            <div class="health-label">Failed</div>
+            <div class="health-label">{{ t("stat.failed") }}</div>
           </div>
           <div class="health-card health-qr">
             <div class="health-value">{{ healthData.scan_qr }}</div>
-            <div class="health-label">Scan QR</div>
+            <div class="health-label">{{ t("stat.scanQr") }}</div>
           </div>
           <div class="health-card health-stopped">
             <div class="health-value">{{ healthData.stopped }}</div>
-            <div class="health-label">Stopped</div>
+            <div class="health-label">{{ t("stat.stopped") }}</div>
           </div>
         </div>
         <div v-else class="health-unavailable">
-          Health data unavailable
+          {{ t("st.healthUnavailable") }}
         </div>
         <div v-if="healthData" class="health-footer">
           <span class="health-meta">
-            Auto-restart: {{ healthData.autoRestartEnabled ? "Enabled" : "Disabled" }}
+            {{ t("st.autoRestartLabel") }}
+            {{ healthData.autoRestartEnabled ? t("st.enabled") : t("st.disabled") }}
           </span>
           <span class="health-meta">
-            Last check: {{ formatTimestamp(healthData.lastCheck) }}
+            {{ t("st.lastCheck") }} {{ formatTimestamp(healthData.lastCheck) }}
           </span>
-          <button class="btn-link" @click="loadHealth">Refresh</button>
+          <button class="btn-link" @click="loadHealth">{{ t("st.refresh") }}</button>
         </div>
       </div>
 
@@ -60,7 +61,7 @@
           {{ t("settings.serverResources") }}
         </div>
         <div v-if="serverHealthLoading" class="health-loading">
-          Loading server health...
+          {{ t("st.loadingServer") }}
         </div>
         <div
           v-else-if="serverHealth && Object.keys(serverHealth).length > 0"
@@ -86,7 +87,7 @@
                   :style="{ width: usedPercent(indicator) + '%' }"
                 />
               </div>
-              <span class="sh-free">{{ formatBytes(indicator.free) }} free</span>
+              <span class="sh-free">{{ formatBytes(indicator.free) }} {{ t("st.freeSuffix") }}</span>
             </div>
             <span
               class="badge"
@@ -95,7 +96,7 @@
           </div>
         </div>
         <div v-else class="health-unavailable">
-          Server health indicators unavailable (requires Manage permission).
+          {{ t("st.serverUnavailable") }}
         </div>
       </div>
 
@@ -108,54 +109,45 @@
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Auto-restart on boot</div>
+              <div class="settings-label">{{ t("st.autoBoot") }}</div>
               <div class="settings-desc">
-                When WAHA starts, automatically restart all sessions that were
-                previously running. Disable this if you want to start sessions
-                manually after a server restart.
+                {{ t("st.autoBootDesc") }}
               </div>
             </div>
             <label class="toggle-switch">
-              <input v-model="sessionLc.autoRestartOnBoot" type="checkbox" aria-label="Auto-restart on boot" />
+              <input v-model="sessionLc.autoRestartOnBoot" type="checkbox" :aria-label="t('st.autoBoot')" />
               <span class="toggle-slider" />
             </label>
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Auto-restart failed sessions</div>
+              <div class="settings-label">{{ t("st.autoFail") }}</div>
               <div class="settings-desc">
-                When a session enters the FAILED state, automatically attempt
-                to restart it. Checked every 60 seconds. No server restart
-                needed to apply changes.
+                {{ t("st.autoFailDesc") }}
               </div>
             </div>
             <label class="toggle-switch">
-              <input v-model="sessionLc.autoRestartFailed" type="checkbox" aria-label="Auto-restart failed sessions" />
+              <input v-model="sessionLc.autoRestartFailed" type="checkbox" :aria-label="t('st.autoFail')" />
               <span class="toggle-slider" />
             </label>
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Restart all sessions</div>
+              <div class="settings-label">{{ t("st.restartAll") }}</div>
               <div class="settings-desc">
-                When enabled, restart commands apply to every session regardless
-                of worker assignment. Useful for single-worker setups. In
-                multi-worker deployments, leave this off so each worker only
-                manages its own sessions.
+                {{ t("st.restartAllDesc") }}
               </div>
             </div>
             <label class="toggle-switch">
-              <input v-model="sessionLc.restartAllSessions" type="checkbox" aria-label="Restart all sessions" />
+              <input v-model="sessionLc.restartAllSessions" type="checkbox" :aria-label="t('st.restartAll')" />
               <span class="toggle-slider" />
             </label>
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Auto-start delay (seconds)</div>
+              <div class="settings-label">{{ t("st.startDelay") }}</div>
               <div class="settings-desc">
-                Wait time in seconds before auto-starting sessions on boot.
-                Set to 0 for immediate startup. Increase if your server needs
-                time to initialize dependencies (e.g. database, Redis).
+                {{ t("st.startDelayDesc") }}
               </div>
             </div>
             <input
@@ -164,21 +156,18 @@
               min="0"
               max="300"
               class="settings-number"
-              aria-label="Auto-start delay in seconds"
+              :aria-label="t('st.startDelay')"
             />
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Default engine</div>
+              <div class="settings-label">{{ t("st.defaultEngine") }}</div>
               <div class="settings-desc">
-                The WhatsApp engine used when creating sessions without
-                specifying one explicitly. "Auto" picks the recommended engine
-                for your setup. Each engine has different trade-offs in terms of
-                speed, reliability, and feature support.
+                {{ t("st.defaultEngineDesc") }}
               </div>
             </div>
             <select v-model="settings.defaultEngine" class="settings-select">
-              <option value="">Auto (recommended)</option>
+              <option value="">{{ t("st.engineAuto") }}</option>
               <option v-for="eng in engines" :key="eng" :value="eng">
                 {{ eng }}
               </option>
@@ -187,7 +176,7 @@
         </div>
         <div class="settings-actions">
           <button class="btn-primary" :disabled="saving" @click="saveSettings">
-            {{ saving ? "Saving..." : "Save Settings" }}
+            {{ saving ? t("st.saving") : t("st.saveSettings") }}
           </button>
         </div>
       </div>
@@ -201,9 +190,9 @@
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Current username</div>
+              <div class="settings-label">{{ t("st.currentUsername") }}</div>
               <div class="settings-desc">
-                {{ dashboardSettings.username || "Not set" }}
+                {{ dashboardSettings.username || t("st.notSet") }}
                 <span v-if="dashboardSettings.source" class="badge badge-working">
                   {{ dashboardSettings.source }}
                 </span>
@@ -212,14 +201,13 @@
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Change credentials</div>
+              <div class="settings-label">{{ t("st.changeCred") }}</div>
               <div class="settings-desc">
-                Update the dashboard login username and password. Credentials
-                stored in the database take priority over environment variables.
+                {{ t("st.changeCredDesc") }}
               </div>
             </div>
             <button class="btn-secondary" @click="showCredentials = true">
-              Change
+              {{ t("st.changeBtn") }}
             </button>
           </div>
         </div>
@@ -234,11 +222,11 @@
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">API Key</div>
+              <div class="settings-label">{{ t("st.apiKey") }}</div>
               <div class="settings-desc">
-                Used to authenticate REST API requests via the
-                <code>X-Api-Key</code> header. Configure via the
-                <code>WAHA_API_KEY</code> environment variable.
+                {{ t("st.apiKeyDescA") }}
+                <code>X-Api-Key</code>{{ t("st.apiKeyDescB") }}
+                <code>WAHA_API_KEY</code>.
               </div>
             </div>
             <div class="api-key-display">
@@ -257,7 +245,7 @@
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Worker ID</div>
+              <div class="settings-label">{{ t("st.workerId") }}</div>
               <div class="settings-desc mono">
                 {{ serverStatus?.worker?.id ?? "default" }}
               </div>
@@ -265,7 +253,7 @@
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Uptime</div>
+              <div class="settings-label">{{ t("st.uptime") }}</div>
               <div class="settings-desc mono">{{ uptimeFormatted }}</div>
             </div>
           </div>
@@ -281,7 +269,7 @@
         <div class="settings-list">
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Version</div>
+              <div class="settings-label">{{ t("st.version") }}</div>
               <div class="settings-desc mono">
                 {{ serverStatus?.version ?? "—" }}
               </div>
@@ -289,10 +277,10 @@
           </div>
           <div class="settings-row">
             <div class="settings-info">
-              <div class="settings-label">Edition</div>
+              <div class="settings-label">{{ t("st.edition") }}</div>
               <div class="settings-desc">
                 <span class="badge badge-working">Core</span>
-                or
+                {{ t("st.or") }}
                 <span class="badge badge-working">Plus</span>
               </div>
             </div>
@@ -308,38 +296,38 @@
       @click.self="showCredentials = false"
     >
       <div class="modal-box">
-        <div class="modal-title">Change Credentials</div>
+        <div class="modal-title">{{ t("st.credsTitle") }}</div>
         <form @submit.prevent="saveCredentials">
           <div class="form-group">
-            <label class="form-label" for="cred-current">Current Password</label>
+            <label class="form-label" for="cred-current">{{ t("st.currentPassword") }}</label>
             <input
               id="cred-current"
               v-model="credForm.currentPassword"
               type="password"
               class="form-input"
-              placeholder="Enter current password"
+              :placeholder="t('st.enterCurrentPass')"
               autocomplete="current-password"
             />
           </div>
           <div class="form-group">
-            <label class="form-label" for="cred-username">New Username</label>
+            <label class="form-label" for="cred-username">{{ t("st.newUsername") }}</label>
             <input
               id="cred-username"
               v-model="credForm.newUsername"
               type="text"
               class="form-input"
-              placeholder="Enter new username"
+              :placeholder="t('st.enterNewUsername')"
               autocomplete="username"
             />
           </div>
           <div class="form-group">
-            <label class="form-label" for="cred-password">New Password</label>
+            <label class="form-label" for="cred-password">{{ t("st.newPassword") }}</label>
             <input
               id="cred-password"
               v-model="credForm.newPassword"
               type="password"
               class="form-input"
-              placeholder="At least 6 characters"
+              :placeholder="t('st.passMinHint')"
               autocomplete="new-password"
             />
           </div>
@@ -349,14 +337,14 @@
               class="btn-secondary"
               @click="showCredentials = false"
             >
-              Cancel
+              {{ t("action.cancel") }}
             </button>
             <button
               type="submit"
               class="btn-primary"
               :disabled="credSaving"
             >
-              {{ credSaving ? "Saving..." : "Save" }}
+              {{ credSaving ? t("st.saving") : t("action.save") }}
             </button>
           </div>
         </form>
@@ -455,16 +443,16 @@ const uptimeFormatted = computed(() => {
 
 const apiKeyMasked = computed(() => {
   const key = "";
-  if (!key) return "Not configured";
+  if (!key) return t("st.notConfigured");
   if (key.length <= 4) return "****";
   return "****" + key.slice(-4);
 });
 
 function prettyIndicatorName(raw: string): string {
   const map: Record<string, string> = {
-    "mediaFiles.space": "Media files disk",
-    "sessionsFiles.space": "Session files disk",
-    mongodb: "MongoDB store",
+    "mediaFiles.space": t("st.mediaDisk"),
+    "sessionsFiles.space": t("st.sessionsDisk"),
+    mongodb: t("st.mongoStore"),
   };
   return map[raw] ?? raw;
 }
@@ -592,7 +580,7 @@ async function saveCredentials() {
       newUsername: credForm.newUsername,
       newPassword: credForm.newPassword,
     });
-    success("Credentials updated successfully!");
+    success(t("st.credUpdated"));
     showCredentials.value = false;
     credForm.currentPassword = "";
     credForm.newUsername = "";
@@ -600,7 +588,7 @@ async function saveCredentials() {
   } catch (err: unknown) {
     const msg =
       (err as { data?: { message?: string } })?.data?.message ??
-      "Failed to update credentials";
+      t("st.credUpdateFail");
     error(msg);
   } finally {
     credSaving.value = false;

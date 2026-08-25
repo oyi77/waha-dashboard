@@ -23,11 +23,11 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Key</th>
-            <th>Type</th>
-            <th>Session</th>
-            <th>Active</th>
-            <th>Actions</th>
+            <th>{{ t("ak.key") }}</th>
+            <th>{{ t("ak.type") }}</th>
+            <th>{{ t("ak.session") }}</th>
+            <th>{{ t("ak.active") }}</th>
+            <th>{{ t("table.actions") }}</th>
           </tr>
         </thead>
         <tbody>
@@ -35,11 +35,11 @@
             <td class="key-id">{{ k.id }}</td>
             <td>
               <span class="key-preview">{{ maskKey(k.key) }}</span>
-              <button class="btn-ghost btn-sm" @click="copyKey(k.key)">Copy</button>
+              <button class="btn-ghost btn-sm" @click="copyKey(k.key)">{{ t("action.copy") }}</button>
             </td>
             <td>
               <span class="badge" :class="k.isAdmin ? 'badge-admin' : 'badge-scoped'">
-                {{ k.isAdmin ? 'Admin' : 'Scoped' }}
+                {{ k.isAdmin ? t("ak.adminBadge") : t("ak.scopedBadge") }}
               </span>
             </td>
             <td class="text-muted text-sm">
@@ -73,15 +73,15 @@
             <label class="radio-option">
               <input v-model="form.isAdmin" type="radio" :value="true" />
               <span>
-                <strong>Admin</strong>
-                <span class="text-dim"> — full access to all sessions</span>
+                <strong>{{ t("ak.adminBadge") }}</strong>
+                <span class="text-dim">{{ t("ak.adminDesc") }}</span>
               </span>
             </label>
             <label class="radio-option">
               <input v-model="form.isAdmin" type="radio" :value="false" />
               <span>
-                <strong>Scoped</strong>
-                <span class="text-dim"> — access to one session only</span>
+                <strong>{{ t("ak.scopedBadge") }}</strong>
+                <span class="text-dim">{{ t("ak.scopedDesc") }}</span>
               </span>
             </label>
           </div>
@@ -94,14 +94,14 @@
           </select>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px">
-          <button class="btn-secondary" style="flex: 1" @click="showCreate = false">Cancel</button>
+          <button class="btn-secondary" style="flex: 1" @click="showCreate = false">{{ t("action.cancel") }}</button>
           <button
             class="btn-primary"
             style="flex: 1"
             :disabled="creating || (!form.isAdmin && !form.session)"
             @click="createKey"
           >
-            {{ creating ? 'Creating…' : 'Create Key' }}
+            {{ creating ? t("action.creating") : t("ak.createKey") }}
           </button>
         </div>
       </div>
@@ -119,14 +119,14 @@
         </div>
         <div class="key-meta">
           <span class="badge" :class="createdKeyData.isAdmin ? 'badge-admin' : 'badge-scoped'">
-            {{ createdKeyData.isAdmin ? 'Admin' : `Scoped: ${createdKeyData.session}` }}
+            {{ createdKeyData.isAdmin ? t("ak.adminBadge") : t("ak.scopedWith", { name: createdKeyData.session }) }}
           </span>
         </div>
         <button class="btn-secondary" style="width: 100%; margin-top: 14px" @click="copyKey(createdKeyData.key)">
-          Copy Key
+          {{ t("ak.copyKey") }}
         </button>
         <button class="btn-ghost" style="width: 100%; margin-top: 8px" @click="createdKeyData = null">
-          Done
+          {{ t("action.done") }}
         </button>
       </div>
     </div>
@@ -136,11 +136,11 @@
       <div class="modal-box">
         <div class="modal-title">{{ t("ak.deleteTitle") }}</div>
         <p class="text-muted" style="font-size: 13px; margin-bottom: 24px">
-          Permanently delete this API key? Any clients using it will lose access immediately.
+          {{ t("ak.deleteMsg") }}
         </p>
         <div style="display: flex; gap: 10px">
-          <button class="btn-ghost" style="flex: 1" @click="deleteTargetId = ''">Cancel</button>
-          <button class="btn-danger" style="flex: 1" @click="deleteKey">Delete</button>
+          <button class="btn-ghost" style="flex: 1" @click="deleteTargetId = ''">{{ t("action.cancel") }}</button>
+          <button class="btn-danger" style="flex: 1" @click="deleteKey">{{ t("action.remove") }}</button>
         </div>
       </div>
     </div>
@@ -183,9 +183,9 @@ function maskKey(key: string): string {
 async function copyKey(key: string) {
   try {
     await navigator.clipboard.writeText(key);
-    success('Copied to clipboard');
+    success(t("action.copied"));
   } catch (e) {
-    error('Failed to copy: ' + extractApiError(e));
+    error(t("toast.copyFail") + extractApiError(e));
   }
 }
 
@@ -203,7 +203,7 @@ async function loadAll() {
       sessions.value = sessionsData.value.map((e: { name: string }) => e.name);
     }
   } catch (e) {
-    error('Failed to load keys: ' + extractApiError(e));
+    error(t("ak.loadFail") + extractApiError(e));
   } finally {
     loading.value = false;
   }
@@ -218,14 +218,14 @@ async function createKey() {
       session: form.isAdmin ? null : (form.session || null),
     };
     const data = await post<ApiKey>('/api/keys', body);
-    success('Key created');
+    success(t("ak.created"));
     showCreate.value = false;
     createdKeyData.value = data;
     form.isAdmin = true;
     form.session = '';
     await loadAll();
   } catch (e) {
-    error('Failed to create key: ' + extractApiError(e));
+    error(t("ak.createFail") + extractApiError(e));
   } finally {
     creating.value = false;
   }
@@ -240,7 +240,7 @@ async function toggleKey(k: ApiKey) {
     });
     await loadAll();
   } catch (e) {
-    error('Failed to update key: ' + extractApiError(e));
+    error(t("ak.updateFail") + extractApiError(e));
   }
 }
 
@@ -253,10 +253,10 @@ async function deleteKey() {
   deleteTargetId.value = '';
   try {
     await del(`/api/keys/${id}`);
-    success('Deleted');
+    success(t("toast.deleted"));
     await loadAll();
   } catch (e) {
-    error('Failed to delete key: ' + extractApiError(e));
+    error(t("ak.deleteFail") + extractApiError(e));
   }
 }
 

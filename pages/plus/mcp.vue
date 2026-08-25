@@ -6,7 +6,7 @@
     </div>
 
     <div class="card" style="margin-bottom: 24px">
-      <div class="form-label">MCP Server URL</div>
+      <div class="form-label">{{ t("mcp.url") }}</div>
       <div style="display: flex; gap: 10px; margin-top: 8px">
         <input
           readonly
@@ -18,7 +18,7 @@
           style="white-space: nowrap"
           @click="copyUrl"
         >
-          Copy
+          {{ t("action.copy") }}
         </button>
       </div>
     </div>
@@ -46,7 +46,7 @@
     >
       <div class="section-title">{{ t("mcp.claudeDesktop") }}</div>
       <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px">
-        Add to
+        {{ t("mcp.addTo") }}
         <code style="font-family: var(--font-mono); color: var(--accent)"
           >~/Library/Application Support/Claude/claude_desktop_config.json</code
         >
@@ -57,7 +57,7 @@
         style="margin-top: 12px"
         @click="copy(claudeDesktopConfig)"
       >
-        Copy Config
+        {{ t("mcp.copyConfig") }}
       </button>
     </div>
 
@@ -77,7 +77,7 @@
         style="margin-top: 12px"
         @click="copy(claudeCodeCmd)"
       >
-        Copy Command
+        {{ t("mcp.copyCommand") }}
       </button>
     </div>
 
@@ -97,12 +97,12 @@
         style="margin-top: 12px"
         @click="copy(genericConfig)"
       >
-        Copy Config
+        {{ t("mcp.copyConfig") }}
       </button>
     </div>
 
     <div class="section-title" style="margin-top: 28px">
-      Available Tools ({{ tools.length }})
+      {{ t("mcp.availableTools", { n: tools.length }) }}
     </div>
 
     <div class="tools-grid">
@@ -115,7 +115,7 @@
     <div class="card" style="margin-top: 24px">
       <div class="section-title">{{ t("mcp.tester") }}</div>
       <div class="form-group">
-        <label class="form-label">Session</label>
+        <label class="form-label">{{ t("ak.session") }}</label>
         <select v-model="tester.session" style="max-width: 240px">
           <option v-for="s in sessions" :key="s" :value="s">{{ s }}</option>
         </select>
@@ -137,9 +137,9 @@
           style="font-family: var(--font-mono); font-size: 12px"
         />
       </div>
-      <button class="btn-primary" @click="runTool">▶ Run Tool</button>
+      <button class="btn-primary" @click="runTool">{{ t("mcp.runTool") }}</button>
       <div v-if="tester.result !== null" style="margin-top: 16px">
-        <div class="form-label">Response</div>
+        <div class="form-label">{{ t("mcp.response") }}</div>
         <div
           class="code-block"
           style="margin-top: 6px; max-height: 240px; overflow-y: auto"
@@ -166,11 +166,11 @@ const { success, error } = useToast();
 const sessions = ref<string[]>([]);
 const activeTab = ref("claude-desktop");
 
-const tabs = [
-  { id: "claude-desktop", label: "Claude Desktop" },
-  { id: "claude-code", label: "Claude Code" },
-  { id: "other", label: "Other MCP Client" },
-];
+const tabs = computed(() => [
+  { id: "claude-desktop", label: t("mcp.tabDesktop") },
+  { id: "claude-code", label: t("mcp.tabCode") },
+  { id: "other", label: t("mcp.tabOther") },
+]);
 
 const origin = computed(() =>
   typeof window !== "undefined" ? window.location.origin : "",
@@ -211,100 +211,100 @@ const genericConfig = computed(() =>
   ),
 );
 
-const tools: McpTool[] = [
+const tools = computed<McpTool[]>(() => [
   {
     name: "waha_send_text",
-    desc: "Send a text message",
+    desc: t("mcp.toolSendText"),
     endpoint: "/api/{session}/sendText",
     example: '{"chatId":"123@s.whatsapp.net","text":"Hello"}',
   },
   {
     name: "waha_send_image",
-    desc: "Send an image message",
+    desc: t("mcp.toolSendImage"),
     endpoint: "/api/{session}/sendImage",
     example:
       '{"chatId":"123@s.whatsapp.net","file":{"url":"https://example.com/img.jpg"}}',
   },
   {
     name: "waha_send_file",
-    desc: "Send a file",
+    desc: t("mcp.toolSendFile"),
     endpoint: "/api/{session}/sendFile",
     example:
       '{"chatId":"123@s.whatsapp.net","file":{"url":"https://example.com/file.pdf"}}',
   },
   {
     name: "waha_send_buttons",
-    desc: "Send a message with buttons",
+    desc: t("mcp.toolSendButtons"),
     endpoint: "/api/{session}/sendButtons",
     example: '{"chatId":"123@s.whatsapp.net","buttons":[]}',
   },
   {
     name: "waha_send_list",
-    desc: "Send a list message",
+    desc: t("mcp.toolSendList"),
     endpoint: "/api/{session}/sendList",
     example: '{"chatId":"123@s.whatsapp.net","sections":[]}',
   },
   {
     name: "waha_get_chats",
-    desc: "Get list of chats",
+    desc: t("mcp.toolGetChats"),
     endpoint: "/api/{session}/chats",
     example: "{}",
   },
   {
     name: "waha_get_messages",
-    desc: "Get messages from a chat",
+    desc: t("mcp.toolGetMessages"),
     endpoint: "/api/{session}/chats/{chatId}/messages",
     example: '{"chatId":"123@s.whatsapp.net"}',
   },
   {
     name: "waha_get_contacts",
-    desc: "Get contacts",
+    desc: t("mcp.toolGetContacts"),
     endpoint: "/api/{session}/contacts",
     example: "{}",
   },
   {
     name: "waha_check_number",
-    desc: "Check if number is on WhatsApp",
+    desc: t("mcp.toolCheckNumber"),
     endpoint: "/api/{session}/contacts/check-exists",
     example: '{"phone":"1234567890"}',
   },
   {
     name: "waha_get_sessions",
-    desc: "List all sessions",
+    desc: t("mcp.toolGetSessions"),
     endpoint: "/api/sessions",
     example: "{}",
   },
   {
     name: "waha_start_session",
-    desc: "Start a session",
+    desc: t("mcp.toolStartSession"),
     endpoint: "/api/sessions/{session}/start",
     example: "{}",
   },
   {
     name: "waha_stop_session",
-    desc: "Stop a session",
+    desc: t("mcp.toolStopSession"),
     endpoint: "/api/sessions/{session}/stop",
     example: "{}",
   },
   {
     name: "waha_get_profile",
-    desc: "Get own profile info",
+    desc: t("mcp.toolGetProfile"),
     endpoint: "/api/{session}/profile",
     example: "{}",
   },
   {
     name: "waha_set_status",
-    desc: "Set WhatsApp status message",
+    desc: t("mcp.toolSetStatus"),
     endpoint: "/api/{session}/profile/status",
     example: '{"status":"Available"}',
   },
   {
     name: "waha_typing",
-    desc: "Send typing indicator",
+    desc: t("mcp.toolTyping"),
     endpoint: "/api/{session}/startTyping",
     example: '{"chatId":"123@s.whatsapp.net"}',
   },
-];
+]);
 
 const tester = reactive({
   session: "",
@@ -316,18 +316,18 @@ const tester = reactive({
 async function copyUrl() {
   try {
     await navigator.clipboard.writeText(mcpUrl.value);
-    success("Copied");
+    success(t("action.copied"));
   } catch (e) {
-    error("Failed to copy to clipboard: " + extractApiError(e));
+    error(t("toast.copyFail") + extractApiError(e));
   }
 }
 
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text);
-    success("Copied");
+    success(t("action.copied"));
   } catch (e) {
-    error("Failed to copy to clipboard: " + extractApiError(e));
+    error(t("toast.copyFail") + extractApiError(e));
   }
 }
 
@@ -339,7 +339,7 @@ async function loadSessions() {
       tester.session = sessions.value[0];
     }
   } catch (e) {
-    error("Failed to load sessions: " + extractApiError(e));
+    error(t("toast.loadSessionsFail") + extractApiError(e));
   }
 }
 
@@ -349,7 +349,7 @@ async function runTool() {
   try {
     params = JSON.parse(tester.params);
   } catch {
-    error("Invalid JSON params");
+    error(t("toast.invalidJsonParams"));
     return;
   }
   try {

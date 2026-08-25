@@ -7,26 +7,26 @@
 
     <div v-if="statsError" class="empty-state">
       <div class="empty-state-icon">!</div>
-      <div class="empty-state-text">Failed to load statistics</div>
-      <button class="btn-ghost" style="margin-top: 8px" @click="loadStats">Retry</button>
+      <div class="empty-state-text">{{ t("plus.index.statsLoadFail") }}</div>
+      <button class="btn-ghost" style="margin-top: 8px" @click="loadStats">{{ t("action.retry") }}</button>
     </div>
     <div v-else class="stats-row grid-3 stagger">
       <div class="stat-card">
         <div class="stat-card-value">{{ stats.scheduled }}</div>
-        <div class="stat-card-label">Scheduled Messages</div>
+        <div class="stat-card-label">{{ t("plus.index.stat.scheduled") }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-value">{{ stats.templates }}</div>
-        <div class="stat-card-label">Message Templates</div>
+        <div class="stat-card-label">{{ t("plus.index.stat.templates") }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-value">{{ stats.rules }}</div>
-        <div class="stat-card-label">Auto-Reply Rules</div>
+        <div class="stat-card-label">{{ t("plus.index.stat.rules") }}</div>
       </div>
     </div>
 
     <div class="section-title" style="margin-top: 32px; margin-bottom: 16px">
-      Features
+      {{ t("plus.index.features") }}
     </div>
 
     <div class="features-grid stagger">
@@ -37,8 +37,8 @@
         class="feature-card"
       >
         <div class="feature-icon" aria-hidden="true">{{ feat.icon }}</div>
-        <div class="feature-name">{{ feat.name }}</div>
-        <div class="feature-desc">{{ feat.desc }}</div>
+        <div class="feature-name">{{ t(feat.nameKey) }}</div>
+        <div class="feature-desc">{{ t(feat.descKey) }}</div>
       </NuxtLink>
     </div>
   </div>
@@ -52,66 +52,16 @@ const stats = reactive({ scheduled: 0, templates: 0, rules: 0 });
 const statsError = ref(false);
 
 const features = [
-  {
-    href: "/plus/sessions",
-    icon: "◎",
-    name: "Session Manager",
-    desc: "Manage multiple WhatsApp sessions with advanced controls",
-  },
-  {
-    href: "/plus/schedule",
-    icon: "◷",
-    name: "Scheduling",
-    desc: "Schedule messages to be sent at a specific date and time",
-  },
-  {
-    href: "/plus/templates",
-    icon: "▣",
-    name: "Templates",
-    desc: "Create reusable message templates for quick sending",
-  },
-  {
-    href: "/plus/autoreply",
-    icon: "↩",
-    name: "Auto-Reply",
-    desc: "Set up keyword-based automatic reply rules",
-  },
-  {
-    href: "/plus/analytics",
-    icon: "▲",
-    name: "Analytics",
-    desc: "View message statistics and session activity charts",
-  },
-  {
-    href: "/plus/apikeys",
-    icon: "⚿",
-    name: "API Keys",
-    desc: "Manage API keys for accessing WAHA endpoints",
-  },
-  {
-    href: "/plus/contacts",
-    icon: "◑",
-    name: "Contacts",
-    desc: "Bulk-check and import WhatsApp contacts from CSV",
-  },
-  {
-    href: "/plus/mcp",
-    icon: "⬡",
-    name: "MCP Server",
-    desc: "Use WAHA as an MCP server for Claude AI agents",
-  },
-  {
-    href: "/plus/engines",
-    icon: "◈",
-    name: "Engines",
-    desc: "Compare and choose the right WhatsApp engine",
-  },
-  {
-    href: "/plus/skills",
-    icon: "✧",
-    name: "Claude Skills",
-    desc: "Install WAHA skills directly into Claude Desktop",
-  },
+  { href: "/plus/sessions", icon: "◎", nameKey: "plus.index.feat.sessions", descKey: "plus.index.feat.sessions.desc" },
+  { href: "/plus/schedule", icon: "◷", nameKey: "plus.index.feat.schedule", descKey: "plus.index.feat.schedule.desc" },
+  { href: "/plus/templates", icon: "▣", nameKey: "plus.index.feat.templates", descKey: "plus.index.feat.templates.desc" },
+  { href: "/plus/autoreply", icon: "↩", nameKey: "plus.index.feat.autoreply", descKey: "plus.index.feat.autoreply.desc" },
+  { href: "/plus/analytics", icon: "▲", nameKey: "plus.index.feat.analytics", descKey: "plus.index.feat.analytics.desc" },
+  { href: "/plus/apikeys", icon: "⚿", nameKey: "plus.index.feat.apikeys", descKey: "plus.index.feat.apikeys.desc" },
+  { href: "/plus/contacts", icon: "◑", nameKey: "plus.index.feat.contacts", descKey: "plus.index.feat.contacts.desc" },
+  { href: "/plus/mcp", icon: "⬡", nameKey: "plus.index.feat.mcp", descKey: "plus.index.feat.mcp.desc" },
+  { href: "/plus/engines", icon: "◈", nameKey: "plus.index.feat.engines", descKey: "plus.index.feat.engines.desc" },
+  { href: "/plus/skills", icon: "✧", nameKey: "plus.index.feat.skills", descKey: "plus.index.feat.skills.desc" },
 ];
 
 async function loadStats() {

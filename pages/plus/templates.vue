@@ -34,10 +34,10 @@
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Tags</th>
-            <th>Actions</th>
+            <th>{{ t("tpl.name") }}</th>
+            <th>{{ t("tpl.type") }}</th>
+            <th>{{ t("form.tags") }}</th>
+            <th>{{ t("table.actions") }}</th>
           </tr>
         </thead>
         <tbody>
@@ -59,10 +59,10 @@
             </td>
             <td>
               <div style="display: flex; gap: 6px">
-                <button class="btn-secondary" aria-label="Send template" @click="openSend(tmpl)">
-                  ▶ Send
+                <button class="btn-secondary" :aria-label="t('tpl.sendTitle')" @click="openSend(tmpl)">
+                  {{ t("tpl.sendBtn") }}
                 </button>
-                <button class="btn-danger" aria-label="Delete template" @click="confirmDelete(tmpl)">
+                <button class="btn-danger" :aria-label="t('tpl.deleteTitle')" @click="confirmDelete(tmpl)">
                   ✕
                 </button>
               </div>
@@ -87,9 +87,9 @@
         <div class="form-group">
           <label class="form-label">{{ t("tpl.type") }}</label>
           <select v-model="createForm.type">
-            <option value="text">Text</option>
-            <option value="image">Image</option>
-            <option value="file">File</option>
+            <option value="text">{{ t("tpl.typeText") }}</option>
+            <option value="image">{{ t("tpl.typeImage") }}</option>
+            <option value="file">{{ t("tpl.typeFile") }}</option>
           </select>
         </div>
         <div class="form-group">
@@ -111,10 +111,10 @@
             style="flex: 1"
             @click="showCreate = false"
           >
-            Cancel
+            {{ t("action.cancel") }}
           </button>
           <button class="btn-primary" style="flex: 1" @click="createTemplate">
-            Create
+            {{ t("action.create") }}
           </button>
         </div>
       </div>
@@ -128,14 +128,14 @@
       <div class="modal-box">
         <div class="modal-title">{{ t("tpl.deleteTitle") }}</div>
         <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 20px">
-          Are you sure you want to delete <strong style="color: var(--text)">{{ deleteConfirm.name }}</strong>?
+          {{ t("tpl.deleteSure") }} <strong style="color: var(--text)">{{ deleteConfirm.name }}</strong>?
         </p>
         <div style="display: flex; gap: 10px">
           <button class="btn-secondary" style="flex: 1" @click="deleteConfirm.open = false">
-            Cancel
+            {{ t("action.cancel") }}
           </button>
           <button class="btn-danger" style="flex: 1" @click="deleteTemplate">
-            Delete
+            {{ t("action.remove") }}
           </button>
         </div>
       </div>
@@ -149,14 +149,14 @@
       <div class="modal-box">
         <div class="modal-title">{{ t("tpl.sendTitle") }} — {{ sendModal.name }}</div>
         <div class="form-group">
-          <label class="form-label">Session</label>
+          <label class="form-label">{{ t("ak.session") }}</label>
           <select v-model="sendModal.session">
             <option value="">{{ t("ak.selectSession") }}</option>
             <option v-for="s in sessions" :key="s" :value="s">{{ s }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Chat ID</label>
+          <label class="form-label">{{ t("sc.chatId") }}</label>
           <input
             v-model="sendModal.chatId"
             placeholder="1234567890@s.whatsapp.net"
@@ -168,10 +168,10 @@
             style="flex: 1"
             @click="sendModal.open = false"
           >
-            Cancel
+            {{ t("action.cancel") }}
           </button>
           <button class="btn-primary" style="flex: 1" @click="sendTemplate">
-            Send
+            {{ t("tpl.sendAction") }}
           </button>
         </div>
       </div>
@@ -223,7 +223,7 @@ async function loadTemplates() {
     const data = await get<Template[]>("/api/templates");
     templates.value = data;
   } catch (e) {
-    error("Failed to load templates: " + extractApiError(e));
+    error(t("tpl.loadFail") + extractApiError(e));
   } finally {
     loading.value = false;
   }
@@ -233,19 +233,19 @@ async function loadSessions() {
   try {
     const data = await get<{ name: string }[]>("/api/sessions?all=true");
     sessions.value = data.map((s) => s.name);
-  } catch (e) { error("Failed to load sessions: " + extractApiError(e)); }
+  } catch (e) { error(t("toast.loadSessionsFail") + extractApiError(e)); }
 }
 
 async function createTemplate() {
   if (!createForm.name) {
-    error("Name is required");
+    error(t("tpl.nameRequired"));
     return;
   }
   let payload: unknown;
   try {
     payload = JSON.parse(createForm.payload);
   } catch {
-    error("Invalid JSON payload");
+    error(t("toast.invalidJson"));
     return;
   }
   try {
@@ -258,14 +258,14 @@ async function createTemplate() {
         .filter(Boolean),
       payload: payload,
     });
-    success("Template created");
+    success(t("tpl.created"));
     showCreate.value = false;
     createForm.name = "";
     createForm.tags = "";
     createForm.payload = '{"text": "Hello!"}';
     await loadTemplates();
   } catch (e) {
-    error("Failed to create template: " + extractApiError(e));
+    error(t("tpl.createFail") + extractApiError(e));
   }
 }
 
@@ -280,10 +280,10 @@ async function deleteTemplate() {
   deleteConfirm.open = false;
   try {
     await del(`/api/templates/${id}`);
-    success("Deleted");
+    success(t("toast.deleted"));
     await loadTemplates();
   } catch (e) {
-    error("Failed to delete template: " + extractApiError(e));
+    error(t("tpl.deleteFail") + extractApiError(e));
   }
 }
 
@@ -297,7 +297,7 @@ function openSend(tmpl: Template) {
 
 async function sendTemplate() {
   if (!sendModal.session || !sendModal.chatId) {
-    error("Session and Chat ID are required");
+    error(t("tpl.requiredFields"));
     return;
   }
   try {
@@ -305,10 +305,10 @@ async function sendTemplate() {
       session: sendModal.session,
       chatId: sendModal.chatId,
     });
-    success("Sent!");
+    success(t("tpl.sentOk"));
     sendModal.open = false;
   } catch (e) {
-    error("Failed to send template: " + extractApiError(e));
+    error(t("tpl.sendFail") + extractApiError(e));
   }
 }
 

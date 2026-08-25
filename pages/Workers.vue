@@ -44,11 +44,11 @@
           </div>
           <div class="worker-meta">
             <div class="detail-row">
-              <span class="detail-key">Uptime</span>
+              <span class="detail-key">{{ t("st.uptime") }}</span>
               <span class="detail-val">{{ uptimeFormatted }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-key">Worker ID</span>
+              <span class="detail-key">{{ t("st.workerId") }}</span>
               <span class="detail-val">{{ serverStatus?.worker?.id ?? 'default' }}</span>
             </div>
           </div>
@@ -69,7 +69,7 @@
         <!-- Sessions list -->
         <div class="card">
           <div class="card-header">
-            <div class="section-title">Sessions</div>
+            <div class="section-title">{{ t("nav.sessions") }}</div>
             <span class="badge">{{ sessions.length }}</span>
           </div>
           <div v-if="sessions.length > 0" class="session-list">
@@ -96,7 +96,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="empty-sessions">No sessions found</div>
+          <div v-else class="empty-sessions">{{ t("eg.noSessions") }}</div>
         </div>
       </div>
     </template>
@@ -113,35 +113,35 @@
     >
       <div class="modal-box">
         <div class="modal-title" style="display: flex; justify-content: space-between; align-items: center">
-          <span>Session: <span style="font-family: var(--font-mono)">{{ selectedSession.name }}</span></span>
-          <button class="btn-ghost" aria-label="Close session detail" @click="closeSessionDetail" style="padding: 4px 8px">✕</button>
+          <span>{{ t("wk.session") }} <span style="font-family: var(--font-mono)">{{ selectedSession.name }}</span></span>
+          <button class="btn-ghost" :aria-label="t('wk.closeDetail')" @click="closeSessionDetail" style="padding: 4px 8px">✕</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px">
           <div class="detail-row">
-            <span class="detail-key">Status</span>
+            <span class="detail-key">{{ t("wk.status") }}</span>
             <span class="badge" :class="sessionStatusClass(selectedSession.status)">
               <span class="badge-dot" />{{ selectedSession.status }}
             </span>
           </div>
           <div class="detail-row">
-            <span class="detail-key">Engine</span>
+            <span class="detail-key">{{ t("form.engine") }}</span>
             <span v-if="resolveEngine(selectedSession.engine)" class="badge" :class="`engine-${resolveEngine(selectedSession.engine).toLowerCase()}`">
               {{ resolveEngine(selectedSession.engine) }}
             </span>
-            <span v-else class="detail-val">Unknown</span>
+            <span v-else class="detail-val">{{ t("eg.unknown") }}</span>
           </div>
           <div class="detail-row" v-if="selectedSession.me?.pushName">
-            <span class="detail-key">Name</span>
+            <span class="detail-key">{{ t("wk.name") }}</span>
             <span class="detail-val">{{ selectedSession.me.pushName }}</span>
           </div>
           <div class="detail-row" v-if="selectedSession.me?.id">
-            <span class="detail-key">Phone</span>
+            <span class="detail-key">{{ t("wk.phone") }}</span>
             <span class="detail-val">{{ selectedSession.me.id.split("@")[0] }}</span>
           </div>
         </div>
 
-        <div class="section-title">Switch Engine</div>
+        <div class="section-title">{{ t("wk.switchEngine") }}</div>
         <div style="display: flex; gap: 10px">
           <select v-model="engineToSwitch" style="flex: 2">
             <option value="NOWEB">NOWEB</option>

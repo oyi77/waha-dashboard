@@ -14,7 +14,7 @@
         <div class="page-title">{{ t("plus.schedule.title") }}</div>
         <div class="page-subtitle">{{ t("plus.schedule.subtitle") }}</div>
       </div>
-      <button class="btn-ghost" @click="loadScheduled">⟳ Refresh</button>
+      <button class="btn-ghost" @click="loadScheduled">{{ t("action.refresh") }}</button>
     </div>
 
     <div class="layout-grid">
@@ -37,9 +37,9 @@
         <div class="form-group">
           <label class="form-label">{{ t("sc.messageType") }}</label>
           <select v-model="form.type">
-            <option value="text">Text</option>
-            <option value="image">Image</option>
-            <option value="template">Template</option>
+            <option value="text">{{ t("sc.typeText") }}</option>
+            <option value="image">{{ t("sc.typeImage") }}</option>
+            <option value="template">{{ t("sc.typeTemplate") }}</option>
           </select>
         </div>
         <div class="form-group">
@@ -60,7 +60,7 @@
           style="width: 100%"
           @click="scheduleMessage"
         >
-          Schedule
+          {{ t("sc.scheduleBtn") }}
         </button>
       </div>
 
@@ -81,10 +81,10 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Session</th>
-                <th>Chat ID</th>
-                <th>Send At</th>
-                <th>Type</th>
+                <th>{{ t("ak.session") }}</th>
+                <th>{{ t("sc.chatId") }}</th>
+                <th>{{ t("sc.sendAt") }}</th>
+                <th>{{ t("ak.type") }}</th>
                 <th></th>
               </tr>
             </thead>
@@ -162,7 +162,7 @@ async function loadSessions() {
       form.session = sessions.value[0];
     }
   } catch (e) {
-    error("Failed to load sessions: " + extractApiError(e));
+    error(t("toast.loadSessionsFail") + extractApiError(e));
   }
 }
 
@@ -172,7 +172,7 @@ async function loadScheduled() {
     const data = await get<Scheduled[]>("/api/schedule");
     scheduled.value = data;
   } catch (e) {
-    error("Failed to load scheduled messages: " + extractApiError(e));
+    error(t("sc.loadFail") + extractApiError(e));
   } finally {
     loading.value = false;
   }
@@ -180,14 +180,14 @@ async function loadScheduled() {
 
 async function scheduleMessage() {
   if (!form.session || !form.chatId || !form.sendAt) {
-    error("Session, Chat ID, and Send At are required");
+    error(t("sc.requiredFields"));
     return;
   }
   let payload: unknown;
   try {
     payload = JSON.parse(form.payload);
   } catch {
-    error("Invalid JSON payload");
+    error(t("toast.invalidJson"));
     return;
   }
   try {
@@ -198,23 +198,23 @@ async function scheduleMessage() {
       sendAt: form.sendAt,
       payload: payload,
     });
-    success("Message scheduled");
+    success(t("sc.scheduledOk"));
     form.chatId = "";
     form.sendAt = "";
     form.payload = '{"text": "Hello!"}';
     await loadScheduled();
   } catch (e) {
-    error("Failed to schedule message: " + extractApiError(e));
+    error(t("sc.scheduleFail") + extractApiError(e));
   }
 }
 
 async function deleteScheduled(id: string) {
   try {
     await del(`/api/schedule/${id}`);
-    success("Deleted");
+    success(t("toast.deleted"));
     await loadScheduled();
   } catch (e) {
-    error("Failed to delete: " + extractApiError(e));
+    error(t("sc.deleteFail") + extractApiError(e));
   }
 }
 

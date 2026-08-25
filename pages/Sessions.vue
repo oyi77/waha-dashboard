@@ -11,8 +11,8 @@
       "
     >
       <div>
-        <div class="page-title">◎ Sessions</div>
-        <div class="page-subtitle">WhatsApp session management</div>
+        <div class="page-title">{{ t("sessions.title") }}</div>
+        <div class="page-subtitle">{{ t("sessions.subtitle") }}</div>
       </div>
        <div
          style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap"
@@ -98,7 +98,7 @@
 
     <!-- Bulk Action Bar -->
     <div v-if="selected.size > 0" class="bulk-bar">
-      <span class="bulk-label">{{ selected.size }} selected</span>
+      <span class="bulk-label">{{ t("sessions.selectedCount", { n: selected.size }) }}</span>
       <button class="btn-secondary" @click="bulkStart">{{ t("action.start") }}</button>
       <button class="btn-ghost" @click="bulkStop">{{ t("action.stop") }}</button>
       <button class="btn-danger" @click="bulkDelete">{{ t("action.delete") }}</button>
@@ -107,13 +107,13 @@
         style="margin-left: auto"
         @click="selected.clear()"
       >
-        ✕ Clear
+        {{ t("action.clear") }}
       </button>
     </div>
 
     <div v-if="loading" class="empty-state">
       <div class="empty-state-icon">⟳</div>
-      <div class="empty-state-text">Loading sessions...</div>
+      <div class="empty-state-text">{{ t("sessions.loading") }}</div>
     </div>
 
     <div v-else-if="filteredSessions.length === 0" class="empty-state">
@@ -125,7 +125,7 @@
         style="margin-top: 16px"
         @click="showCreate = true"
       >
-        + Create First Session
+        {{ t("sessions.createFirst") }}
       </button>
     </div>
 
@@ -258,10 +258,12 @@
     >
       <div class="modal-box" tabindex="-1">
         <div class="modal-title">
-          {{ editTarget !== null ? "Edit Session" : "Create Session" }}
+          {{
+            editTarget !== null ? t("modal.editSession") : t("modal.createSession")
+          }}
         </div>
         <div class="form-group">
-          <label class="form-label">Session Name</label>
+          <label class="form-label">{{ t("form.sessionName") }}</label>
           <input
             v-model="form.name"
             :placeholder="editTarget !== null ? '' : 'default'"
@@ -269,7 +271,7 @@
           />
         </div>
         <div class="form-group">
-          <label class="form-label">Engine</label>
+          <label class="form-label">{{ t("form.engine") }}</label>
           <select v-model="form.engine">
             <option value="">Auto</option>
             <option v-for="eng in engines" :key="eng" :value="eng">
@@ -278,11 +280,31 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Tags (comma-separated)</label>
+          <label class="form-label">{{ t("tpl.tagsCsv") }}</label>
           <input v-model="form.tags" placeholder="sales, support, bots" />
         </div>
+        <div class="form-group">
+          <label class="form-label">{{ t("form.proxyTitle") }}</label>
+          <input
+            v-model="form.proxyServer"
+            :placeholder="t('form.proxyServerPh')"
+            style="margin-bottom: 8px"
+          />
+          <input
+            v-model="form.proxyUser"
+            :placeholder="t('form.proxyUser')"
+            autocomplete="off"
+            style="margin-bottom: 8px"
+          />
+          <input
+            v-model="form.proxyPass"
+            type="password"
+            :placeholder="t('form.proxyPass')"
+            autocomplete="new-password"
+          />
+        </div>
         <div v-if="editTarget === null" class="form-group">
-          <label class="form-label">Start on create</label>
+          <label class="form-label">{{ t("form.startNow") }}</label>
           <label class="toggle-switch">
             <input v-model="form.start" type="checkbox" />
             <span class="toggle-slider" />
@@ -290,14 +312,14 @@
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px">
           <button class="btn-secondary" style="flex: 1" @click="closeModal">
-            Cancel
+            {{ t("action.cancel") }}
           </button>
           <button
             class="btn-primary"
             style="flex: 1"
             @click="editTarget !== null ? saveEdit() : createSession()"
           >
-            {{ editTarget !== null ? "Save" : "Create" }}
+            {{ editTarget !== null ? t("action.save") : t("action.create") }}
           </button>
         </div>
       </div>
@@ -306,37 +328,37 @@
     <!-- QR Modal -->
     <div v-if="qrSession" class="modal-overlay" @click.self="qrSession = ''" @keydown.escape="qrSession = ''">
       <div class="modal-box" style="text-align: center">
-        <div class="modal-title">Scan QR Code — {{ qrSession }}</div>
+        <div class="modal-title">{{ t("modal.qrTitle") }} — {{ qrSession }}</div>
         <div
           v-if="qrData === 'pending'"
           class="empty-state-text"
           style="padding: 40px 0"
         >
-          Waiting for session to be ready...
+          {{ t("qr.waiting") }}
         </div>
         <div
           v-else-if="qrData === 'timeout'"
           class="empty-state-text"
           style="padding: 40px 0; color: #f59e0b"
         >
-          Session did not enter QR state in time.<br />Please try again.
+          {{ t("qr.timeout") }}<br />{{ t("qr.tryAgain") }}
         </div>
         <div v-else-if="qrData" style="margin: 20px auto">
           <img
             :src="qrData"
-            alt="QR Code"
+            :alt="t('modal.qrTitle')"
             style="max-width: 260px; border-radius: 8px"
           />
         </div>
         <div v-else class="empty-state-text" style="padding: 40px 0">
-          Loading QR...
+          {{ t("qr.loading") }}
         </div>
         <button
           class="btn-ghost"
           style="margin-top: 12px"
           @click="qrSession = ''"
         >
-          Close
+          {{ t("action.close") }}
         </button>
       </div>
     </div>
@@ -351,7 +373,7 @@
       <div class="modal-box" tabindex="-1">
         <div class="modal-title">{{ t("acct.title") }} — {{ statusTarget }}</div>
         <div v-if="statusLoading" class="empty-state-text" style="padding: 24px 0">
-          ⟳ Loading...
+          {{ t("acct.loading") }}
         </div>
         <template v-else>
           <div class="status-section">
@@ -414,7 +436,7 @@
           style="margin-top: 16px; width: 100%"
           @click="statusTarget = ''"
         >
-          Close
+          {{ t("action.close") }}
         </button>
       </div>
     </div>
@@ -439,7 +461,7 @@
             style="flex: 1"
             @click="confirmAction = null"
           >
-            Cancel
+            {{ t("action.cancel") }}
           </button>
           <button
             :class="confirmAction.danger ? 'btn-danger' : 'btn-primary'"
@@ -514,6 +536,9 @@ const form = reactive({
   name: "",
   engine: "",
   tags: "",
+  proxyServer: "",
+  proxyUser: "",
+  proxyPass: "",
   start: true,
 });
 
@@ -676,6 +701,16 @@ async function createSession() {
     const name = form.name.trim() || "default";
     const body: Record<string, unknown> = { name };
     if (form.engine) body.engine = form.engine;
+    if (form.proxyServer.trim()) {
+      body.config = {
+        proxy: {
+          server: form.proxyServer.trim(),
+          ...(form.proxyUser.trim()
+            ? { username: form.proxyUser.trim(), password: form.proxyPass }
+            : {}),
+        },
+      };
+    }
     if (form.tags.trim()) {
       body.metadata = {
         tags: form.tags
@@ -703,6 +738,17 @@ function editSession(session: Session) {
   form.name = session.name;
   form.engine = session.engine ?? "";
   form.tags = getTags(session).join(", ");
+  const proxy = (
+    session as { config?: { proxy?: { server?: string; username?: string } } }
+  )?.config?.proxy;
+  form.proxyServer = proxy?.server ?? "";
+  form.proxyUser = proxy?.username ?? "";
+  form.proxyPass = "";
+}
+function clearProxyFields() {
+  form.proxyServer = "";
+  form.proxyUser = "";
+  form.proxyPass = "";
 }
 
 async function saveEdit() {
@@ -710,6 +756,16 @@ async function saveEdit() {
   try {
     const config: Record<string, unknown> = {};
     if (form.engine) config.engine = form.engine;
+    if (form.proxyServer.trim()) {
+      config.proxy = {
+        server: form.proxyServer.trim(),
+        ...(form.proxyUser.trim()
+          ? { username: form.proxyUser.trim(), password: form.proxyPass }
+          : {}),
+      };
+    } else {
+      config.proxy = null;
+    }
     config.metadata = {
       tags: form.tags
         .split(",")
@@ -992,7 +1048,7 @@ async function openQr(name: string) {
   } catch (err: unknown) {
     const msg =
       (err as { data?: { message?: string } })?.data?.message ??
-      "Failed to load QR code";
+      t("qr.loadFail");
     error(msg);
     qrData.value = "";
   }
@@ -1017,7 +1073,7 @@ async function fetchQr(name: string) {
     if (!qrData.value) {
       error(
         (err as { data?: { message?: string } })?.data?.message ??
-          "Failed to load QR code",
+          t("qr.loadFail"),
       );
     }
   }
@@ -1087,6 +1143,9 @@ function closeModal() {
   form.name = "";
   form.engine = "";
   form.tags = "";
+  form.proxyServer = "";
+  form.proxyUser = "";
+  form.proxyPass = "";
   form.start = true;
 }
 

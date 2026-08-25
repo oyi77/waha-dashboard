@@ -27,8 +27,8 @@
           <div class="form-group">
             <label class="form-label">{{ t("ar.replyType") }}</label>
             <select v-model="createForm.type">
-              <option value="text">Text</option>
-              <option value="image">Image</option>
+              <option value="text">{{ t("ar.typeText") }}</option>
+              <option value="image">{{ t("ar.typeImage") }}</option>
             </select>
           </div>
           <div class="form-group">
@@ -41,22 +41,22 @@
             />
           </div>
           <button class="btn-primary" style="width: 100%" @click="createRule">
-            Create Rule
+            {{ t("ar.createRule") }}
           </button>
         </div>
 
         <div class="card">
-          <div class="section-title">Test Auto-Reply</div>
+          <div class="section-title">{{ t("ar.testTitle") }}</div>
           <div class="form-group">
             <label class="form-label">{{ t("ar.testMessage") }}</label>
-            <input v-model="testInput" placeholder="Type a message to test…" />
+            <input v-model="testInput" :placeholder="t('ar.testPlaceholder')" />
           </div>
           <button
             class="btn-secondary"
             style="width: 100%; margin-bottom: 12px"
             @click="testRule"
           >
-            Test
+            {{ t("ar.testBtn") }}
           </button>
           <div v-if="testResult !== null">
             <div class="form-label">{{ t("ar.result") }}</div>
@@ -68,7 +68,7 @@
       </div>
 
       <div>
-        <div class="section-title">Rules ({{ rules.length }})</div>
+        <div class="section-title">{{ t("ar.rulesCount", { n: rules.length }) }}</div>
         <div v-if="loading" class="empty-state">
           <div class="empty-state-icon">⟳</div>
           <div class="empty-state-text">{{ t("ar.loading") }}</div>
@@ -81,9 +81,9 @@
           <table>
             <thead>
               <tr>
-                <th>Keyword</th>
-                <th>Type</th>
-                <th>Enabled</th>
+                <th>{{ t("ar.keyword") }}</th>
+                <th>{{ t("ak.type") }}</th>
+                <th>{{ t("ar.enabledCol") }}</th>
                 <th></th>
               </tr>
             </thead>
@@ -154,7 +154,7 @@ async function loadRules() {
     const data = await get<AutoReplyRule[]>("/api/autoreply");
     rules.value = data;
   } catch (e) {
-    error("Failed to load rules: " + extractApiError(e));
+    error(t("ar.loadFail") + extractApiError(e));
   } finally {
     loading.value = false;
   }
@@ -162,14 +162,14 @@ async function loadRules() {
 
 async function createRule() {
   if (!createForm.keyword) {
-    error("Keyword is required");
+    error(t("ar.keywordRequired"));
     return;
   }
   let payload: unknown;
   try {
     payload = JSON.parse(createForm.payload);
   } catch {
-    error("Invalid JSON payload");
+    error(t("toast.invalidJson"));
     return;
   }
   try {
@@ -178,22 +178,22 @@ async function createRule() {
       type: createForm.type,
       payload: payload,
     });
-    success("Rule created");
+    success(t("ar.created"));
     createForm.keyword = "";
     createForm.payload = '{"text": "Hello back!"}';
     await loadRules();
   } catch (e) {
-    error("Failed to create rule: " + extractApiError(e));
+    error(t("ar.createFail") + extractApiError(e));
   }
 }
 
 async function deleteRule(id: string) {
   try {
     await del(`/api/autoreply/${id}`);
-    success("Deleted");
+    success(t("toast.deleted"));
     await loadRules();
   } catch (e) {
-    error("Failed to delete rule: " + extractApiError(e));
+    error(t("ar.deleteFail") + extractApiError(e));
   }
 }
 
@@ -204,13 +204,13 @@ async function toggleRule(rule: AutoReplyRule) {
     });
     await loadRules();
   } catch (e) {
-    error("Failed to update rule: " + extractApiError(e));
+    error(t("ar.updateFail") + extractApiError(e));
   }
 }
 
 async function testRule() {
   if (!testInput.value) {
-    error("Enter a test message first");
+    error(t("ar.testRequired"));
     return;
   }
   try {
