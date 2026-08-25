@@ -124,6 +124,7 @@ const route = useRoute();
 const { t, locale, toggleLocale } = useLocale();
 
 const sidebarOpen = useState<boolean>("waha_sidebar_open", () => false);
+useGlobalModalTrap();
 
 const { connected: rtConnected, ensureConnected: rtEnsure } = useWahaRealtime();
 const pageTitles: Record<string, string> = {

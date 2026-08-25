@@ -107,7 +107,6 @@
       class="modal-overlay"
       @click.self="closeSessionDetail"
       @keydown.escape="closeSessionDetail"
-      ref="modalOverlay"
       role="dialog"
       aria-modal="true"
     >
@@ -199,31 +198,7 @@ const sessions = ref<SessionInfo[]>([]);
 const selectedSession = ref<SessionInfo | null>(null);
 const engineToSwitch = ref<string>("");
 const isSwitching = ref(false);
-const modalOverlay = ref<HTMLElement | null>(null);
-
-function trapFocus(e: KeyboardEvent) {
-  if (!modalOverlay.value || e.key !== "Tab") return;
-  const focusable = modalOverlay.value.querySelectorAll<HTMLElement>(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-  );
-  if (focusable.length === 0) return;
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (e.shiftKey) {
-    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-  } else {
-    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-  }
-}
-
-watch(selectedSession, (val) => {
-  if (val) {
-    document.addEventListener("keydown", trapFocus);
-    nextTick(() => { modalOverlay.value?.querySelector<HTMLElement>("[autofocus], button")?.focus(); });
-  } else {
-    document.removeEventListener("keydown", trapFocus);
-  }
-});
+// Modal focus trapping is handled globally by useGlobalModalTrap (layouts/default.vue).
 
 const workerLabel = computed(() => serverStatus.value?.worker?.id ?? "default");
 
