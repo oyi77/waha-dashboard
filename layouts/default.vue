@@ -351,6 +351,12 @@ onMounted(() => {
     transition: transform 0.25s ease;
   }
 
+  /* Keep the hamburger tappable above the open sidebar so it can toggle
+     closed (sidebar z-index 200 would otherwise cover the whole topbar). */
+  .topbar {
+    z-index: 250;
+  }
+
   .sidebar.open {
     transform: translateX(0);
   }
